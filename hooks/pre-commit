@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# EEveon Pre-Commit Hook
+# Runs tests before allowing commits
+# Our own testing system - no external dependencies!
+#
+
+set -e
+
+echo "╔══════════════════════════════════════════════════════════════════╗"
+echo "║              EEveon Pre-Commit Tests                            ║"
+echo "╚══════════════════════════════════════════════════════════════════╝"
+echo ""
+
+# Get the repository root
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Run unit tests
+echo "Running unit tests..."
+if ! "$REPO_ROOT/tests/run_tests.sh"; then
+    echo ""
+    echo "❌ Unit tests failed! Commit aborted."
+    echo "Fix the issues and try again."
+    exit 1
+fi
+
+echo ""
+echo "Running integration tests..."
+if ! "$REPO_ROOT/tests/integration_test.sh"; then
+    echo ""
+    echo "❌ Integration tests failed! Commit aborted."
+    echo "Fix the issues and try again."
+    exit 1
+fi
+
+echo ""
+echo "✅ All tests passed! Proceeding with commit..."
+echo ""
+
+exit 0

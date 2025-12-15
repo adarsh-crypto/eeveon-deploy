@@ -1,0 +1,27 @@
+# System dependencies (installed via apt/yum)
+# These are NOT Python packages
+# Install with: sudo apt install git jq rsync curl
+
+# Python dependencies (none required for core functionality)
+# EEveon uses system tools for maximum compatibility and minimal dependencies
+
+# Optional Python packages for development
+# Uncomment if you want to use these tools:
+
+# Development tools
+# black>=22.0.0          # Code formatting
+# isort>=5.0.0           # Import sorting
+# flake8>=4.0.0          # Linting
+# mypy>=0.950            # Type checking
+
+# Testing (we use our own bash-based tests)
+# pytest>=7.0.0          # Python testing framework
+# pytest-cov>=3.0.0      # Coverage reporting
+
+# Documentation
+# sphinx>=4.0.0          # Documentation generator
+# sphinx-rtd-theme>=1.0.0  # Read the Docs theme
+
+# Build tools
+# build>=0.7.0           # PEP 517 build frontend
+# twine>=4.0.0           # PyPI upload tool
