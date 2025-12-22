@@ -21,6 +21,8 @@ long_description = readme_file.read_text(encoding="utf-8") if readme_file.exists
 # Read requirements (system dependencies documented, no Python deps)
 requirements = [
     "cryptography>=3.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
 ]
 
 setup(
@@ -81,6 +83,8 @@ setup(
     package_data={
         "eeveon": [
             "scripts/*.sh",
+            "dashboard/*.html",
+            "dashboard/static/*.css",
         ],
     },
     data_files=[

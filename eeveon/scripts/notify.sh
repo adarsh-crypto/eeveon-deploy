@@ -26,10 +26,12 @@ fi
 
 # Extract notification settings
 SLACK_ENABLED=$(jq -r '.slack.enabled // false' "$NOTIFY_CONFIG")
-SLACK_WEBHOOK=$(jq -r '.slack.webhook_url // ""' "$NOTIFY_CONFIG")
+SLACK_WEBHOOK_ENC=$(jq -r '.slack.webhook_url // ""' "$NOTIFY_CONFIG")
+SLACK_WEBHOOK=$(eeveon system decrypt "$SLACK_WEBHOOK_ENC")
 
 DISCORD_ENABLED=$(jq -r '.discord.enabled // false' "$NOTIFY_CONFIG")
-DISCORD_WEBHOOK=$(jq -r '.discord.webhook_url // ""' "$NOTIFY_CONFIG")
+DISCORD_WEBHOOK_ENC=$(jq -r '.discord.webhook_url // ""' "$NOTIFY_CONFIG")
+DISCORD_WEBHOOK=$(eeveon system decrypt "$DISCORD_WEBHOOK_ENC")
 
 EMAIL_ENABLED=$(jq -r '.email.enabled // false' "$NOTIFY_CONFIG")
 EMAIL_TO=$(jq -r '.email.to // ""' "$NOTIFY_CONFIG")
@@ -38,42 +40,56 @@ SMTP_HOST=$(jq -r '.email.smtp_host // ""' "$NOTIFY_CONFIG")
 SMTP_PORT=$(jq -r '.email.smtp_port // 587' "$NOTIFY_CONFIG")
 
 TELEGRAM_ENABLED=$(jq -r '.telegram.enabled // false' "$NOTIFY_CONFIG")
-TELEGRAM_BOT_TOKEN=$(jq -r '.telegram.bot_token // ""' "$NOTIFY_CONFIG")
+TELEGRAM_BOT_TOKEN_ENC=$(jq -r '.telegram.bot_token // ""' "$NOTIFY_CONFIG")
+TELEGRAM_BOT_TOKEN=$(eeveon system decrypt "$TELEGRAM_BOT_TOKEN_ENC")
 TELEGRAM_CHAT_ID=$(jq -r '.telegram.chat_id // ""' "$NOTIFY_CONFIG")
 
 WEBHOOK_ENABLED=$(jq -r '.webhook.enabled // false' "$NOTIFY_CONFIG")
 WEBHOOK_URL=$(jq -r '.webhook.url // ""' "$NOTIFY_CONFIG")
 
+TEAMS_ENABLED=$(jq -r '.teams.enabled // false' "$NOTIFY_CONFIG")
+TEAMS_WEBHOOK_ENC=$(jq -r '.teams.webhook_url // ""' "$NOTIFY_CONFIG")
+TEAMS_WEBHOOK=$(eeveon system decrypt "$TEAMS_WEBHOOK_ENC")
+
+
+# Function to check if a channel should be notified for this status
+check_channel() {
+    local channel="$1"
+    local status="$2"
+    # Status mapping from config (default to true if not specified)
+    jq -e ".${channel}.events.${status} // true" "$NOTIFY_CONFIG" >/dev/null 2>&1
+}
+
 # Determine color/emoji based on status
 case "$STATUS" in
     success)
         COLOR="#36a64f"
-        EMOJI="✅"
+        EMOJI="[PASS]"
         DISCORD_COLOR=3066993
         ;;
     failure)
         COLOR="#ff0000"
-        EMOJI="❌"
+        EMOJI="[FAIL]"
         DISCORD_COLOR=15158332
         ;;
     warning)
         COLOR="#ff9900"
-        EMOJI="⚠️"
+        EMOJI="[WARN]"
         DISCORD_COLOR=16776960
         ;;
     *)
         COLOR="#0099ff"
-        EMOJI="ℹ️"
+        EMOJI="[INFO]"
         DISCORD_COLOR=255
         ;;
 esac
 
 # Send Slack notification
-if [ "$SLACK_ENABLED" = "true" ] && [ -n "$SLACK_WEBHOOK" ]; then
+if [ "$SLACK_ENABLED" = "true" ] && [ -n "$SLACK_WEBHOOK" ] && check_channel "slack" "$STATUS"; then
     SLACK_PAYLOAD=$(cat <<EOF
 {
     "username": "EEveon CI/CD",
-    "icon_emoji": ":rocket:",
+    "icon_emoji": "",
     "attachments": [{
         "color": "$COLOR",
         "title": "$EMOJI Deployment $STATUS",
@@ -119,7 +135,7 @@ EOF
 fi
 
 # Send Discord notification
-if [ "$DISCORD_ENABLED" = "true" ] && [ -n "$DISCORD_WEBHOOK" ]; then
+if [ "$DISCORD_ENABLED" = "true" ] && [ -n "$DISCORD_WEBHOOK" ] && check_channel "discord" "$STATUS"; then
     DISCORD_PAYLOAD=$(cat <<EOF
 {
     "username": "EEveon CI/CD",
@@ -165,7 +181,7 @@ EOF
 fi
 
 # Send Telegram notification
-if [ "$TELEGRAM_ENABLED" = "true" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+if [ "$TELEGRAM_ENABLED" = "true" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] && check_channel "telegram" "$STATUS"; then
     TELEGRAM_MESSAGE="$EMOJI *Deployment $STATUS*
 
 *Project:* $PROJECT_NAME
@@ -181,8 +197,35 @@ if [ "$TELEGRAM_ENABLED" = "true" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TE
         -d "parse_mode=Markdown" &>/dev/null
 fi
 
+# Send MS Teams notification
+if [ "$TEAMS_ENABLED" = "true" ] && [ -n "$TEAMS_WEBHOOK" ] && check_channel "teams" "$STATUS"; then
+    TEAMS_PAYLOAD=$(cat <<EOF
+{
+    "@type": "MessageCard",
+    "@context": "http://schema.org/extensions",
+    "themeColor": "${COLOR#\#}",
+    "summary": "EEveon Deployment Notification",
+    "sections": [{
+        "activityTitle": "$EMOJI Deployment $STATUS: $PROJECT_NAME",
+        "activitySubtitle": "$MESSAGE",
+        "facts": [
+            {"name": "Project", "value": "$PROJECT_NAME"},
+            {"name": "Status", "value": "$STATUS"},
+            {"name": "Commit", "value": "${COMMIT_HASH:0:7}"},
+            {"name": "Message", "value": "$COMMIT_MSG"}
+        ],
+        "markdown": true
+    }]
+}
+EOF
+)
+    curl -X POST -H 'Content-type: application/json' \
+        --data "$TEAMS_PAYLOAD" \
+        "$TEAMS_WEBHOOK" &>/dev/null
+fi
+
 # Send custom webhook
-if [ "$WEBHOOK_ENABLED" = "true" ] && [ -n "$WEBHOOK_URL" ]; then
+if [ "$WEBHOOK_ENABLED" = "true" ] && [ -n "$WEBHOOK_URL" ] && check_channel "webhook" "$STATUS"; then
     WEBHOOK_PAYLOAD=$(cat <<EOF
 {
     "project": "$PROJECT_NAME",

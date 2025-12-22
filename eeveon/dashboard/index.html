@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EEveon Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #030303;
+            --card-bg: rgba(15, 15, 15, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.3);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .background-glow {
+            position: fixed;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1000px;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 90px;
+            background: rgba(3, 3, 3, 0.8);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            padding: 0 4rem;
+            z-index: 200;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: baseline;
+            gap: 1.5rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .topics {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+            margin-left: 3rem;
+        }
+
+        .topic {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            position: relative;
+            padding: 0.5rem 0;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-count {
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.4);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+
+        .active .nav-count {
+            background: var(--primary-glow);
+            color: var(--primary);
+        }
+
+        .topic:hover {
+            color: #fff;
+            opacity: 1;
+        }
+
+        .topic.active {
+            color: var(--primary);
+            opacity: 1;
+            font-weight: 600;
+        }
+
+        /* Active highlight line */
+        .topic.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+            border-radius: 10px;
+        }
+
+
+
+        .update-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: auto;
+            font-family: var(--font-mono);
+            opacity: 0.5;
+        }
+
+        .main-content {
+            padding: 130px 4rem 4rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .site-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .site-card:hover {
+            border-color: rgba(16, 185, 129, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .site-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), transparent);
+        }
+
+        .project-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+        }
+
+        .status-offline {
+            background: rgba(244, 63, 94, 0.15);
+            color: #f43f5e;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 12px;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .btn-small:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger:hover {
+            border-color: #f43f5e;
+            color: #f43f5e;
+        }
+
+        .log-viewer {
+            background: #000;
+            border: 1px solid var(--card-border);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #a1a1aa;
+            height: 600px;
+            overflow-y: auto;
+        }
+
+        .log-line {
+            margin-bottom: 6px;
+            border-left: 3px solid #1a1a1a;
+            padding-left: 14px;
+            line-height: 1.5;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 2.5rem;
+            right: 2.5rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast {
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--primary);
+            color: white;
+            padding: 1.2rem 1.8rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            animation: toastSlideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+            min-width: 320px;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.fade-out {
+            animation: fadeOut 0.4s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-glow"></div>
+    <div id="toast-container"></div>
+
+    <header>
+        <div class="logo-group">
+            <div class="logo" onclick="location.reload()">EEveon<span style="color:var(--primary);">.</span></div>
+            <div
+                style="background: rgba(16, 185, 129, 0.1); color: var(--primary); font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2); letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
+                <span
+                    style="width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 8px var(--primary);"></span>
+                ENGINE ACTIVE
+            </div>
+            <div class="topics">
+                <div class="topic topic-sites active" onclick="showSection('sites')">Sites <span class="nav-count"
+                        id="count-sites">0</span></div>
+                <div class="topic topic-logs" onclick="showSection('logs')">Logs</div>
+                <div class="topic topic-nodes" onclick="showSection('nodes')">Nodes <span class="nav-count"
+                        id="count-nodes">0</span></div>
+                <div class="topic topic-notifications" onclick="showSection('notifications')">Notifications</div>
+                <div class="topic topic-settings" onclick="showSection('settings')">Settings</div>
+            </div>
+            <div class="update-time" id="last-update">Updating...</div>
+        </div>
+    </header>
+
+    <div class="main-content" id="sites-section">
+        <div id="sites-list"></div>
+    </div>
+
+    <div class="main-content" id="logs-section" style="display: none;">
+        <div class="log-viewer" id="log-container"></div>
+    </div>
+
+    <div class="main-content" id="nodes-section" style="display: none;">
+        <div id="nodes-list"></div>
+    </div>
+
+    <div class="main-content" id="notifications-section" style="display: none;">
+        <div id="notifications-list"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+            <!-- Slack -->
+            <div class="site-card">
+                <div class="card-header"><span class="project-name">Slack</span> <span class="nav-count">Webhook</span>
+                </div>
+                <input type="text" id="notif-slack-url" placeholder="Webhook URL"
+                    style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px; margin: 1rem 0;">
+                <div class="status-mapping" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-slack-pass" checked> PASS</label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-slack-fail" checked> FAIL</label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-slack-warn" checked> WARN</label>
+                </div>
+            </div>
+            <!-- Teams -->
+            <div class="site-card">
+                <div class="card-header"><span class="project-name">MS Teams</span> <span
+                        class="nav-count">Webhook</span></div>
+                <input type="text" id="notif-teams-url" placeholder="Webhook URL"
+                    style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px; margin: 1rem 0;">
+                <div class="status-mapping" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-teams-pass" checked> PASS</label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-teams-fail" checked> FAIL</label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-teams-warn" checked> WARN</label>
+                </div>
+            </div>
+            <!-- Discord -->
+            <div class="site-card">
+                <div class="card-header"><span class="project-name">Discord</span> <span
+                        class="nav-count">Webhook</span></div>
+                <input type="text" id="notif-discord-url" placeholder="Webhook URL"
+                    style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px; margin: 1rem 0;">
+                <div class="status-mapping" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-discord-pass" checked> PASS</label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-discord-fail" checked> FAIL</label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);"><input type="checkbox"
+                            id="notif-discord-warn" checked> WARN</label>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 2rem; display: flex; justify-content: center;">
+            <button class="btn-small" onclick="saveNotifications()"
+                style="background: var(--primary); color: #000; padding: 12px 40px; font-weight: 800;">
+                <i data-lucide="save"></i> SAVE CONFIGURATION
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content" id="settings-section" style="display: none;">
+        <div class="site-card">
+            <h2>Settings</h2>
+            <p>Configuration management coming soon.</p>
+        </div>
+    </div>
+
+    <script>
+        // Authentication
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || localStorage.getItem('eeveon_token');
+
+        if (token) {
+            localStorage.setItem('eeveon_token', token);
+            // Clean URL
+            if (urlParams.has('token')) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } else {
+            document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:1rem;"><h1 style="color:#f43f5e;">Access Denied</h1><p style="color:#94a3b8;">Please use the authenticated URL from your terminal.</p></div>';
+        }
+
+        // Helper to add auth header to all requests
+        async function authFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            options.headers['X-EEveon-Token'] = token;
+            const res = await fetch(url, options);
+            if (res.status === 401) {
+                localStorage.removeItem('eeveon_token');
+                location.reload();
+            }
+            return res;
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await authFetch('/api/status');
+                const data = await res.json();
+                document.getElementById('count-sites').innerText = data.sites.length;
+                document.getElementById('count-nodes').innerText = data.node_count;
+                document.getElementById('last-update').innerText = 'Last updated: ' + new Date().toLocaleTimeString();
+                renderSites(data.sites);
+            } catch (err) { }
+        }
+
+        function renderSites(sites) {
+            const container = document.getElementById('sites-list');
+            container.innerHTML = '';
+            sites.forEach(site => {
+                const isPending = !!site.pending_commit;
+                const card = document.createElement('div');
+                card.className = 'site-card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div><span class="project-name">${site.name}</span><div style="color:var(--text-muted); font-size:0.8rem;">${site.repo}</div></div>
+                        <span class="status-badge ${isPending ? 'status-pending' : 'status-active'}">${isPending ? 'Pending' : site.status}</span>
+                    </div>
+                    <div class="action-btns">
+                        <button class="btn-small" onclick="triggerDeploy('${site.name}')"><i data-lucide="play"></i> Deploy</button>
+                        <button class="btn-small" onclick="rollbackSite('${site.name}')"><i data-lucide="rotate-ccw"></i> Rollback</button>
+                        ${isPending ? `<button class="btn-small" style="color:var(--primary)" onclick="approveSite('${site.name}')"><i data-lucide="check"></i> Approve</button>` : ''}
+                        <button class="btn-small btn-danger" onclick="removeSite('${site.name}')"><i data-lucide="trash-2"></i> Remove</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        async function triggerDeploy(name) { await authFetch(`/api/deploy/${name}`, { method: 'POST' }); showToast(`Deploying ${name}...`); }
+        async function rollbackSite(name) { await authFetch(`/api/rollback/${name}`, { method: 'POST' }); showToast(`Rollback started for ${name}`); }
+        async function approveSite(name) { await authFetch(`/api/approve/${name}`, { method: 'POST' }); showToast(`Approved ${name}`); fetchStatus(); }
+        async function removeSite(name) { if (confirm(`Delete project ${name}?`)) { await authFetch(`/api/remove/${name}`, { method: 'DELETE' }); showToast(`Removed ${name}`); fetchStatus(); } }
+
+        async function fetchLogs() {
+            try {
+                const res = await authFetch('/api/logs?lines=200');
+                const data = await res.json();
+                const container = document.getElementById('log-container');
+                container.innerHTML = data.logs.map(line => `<div class="log-line">${line}</div>`).join('');
+                container.scrollTop = container.scrollHeight;
+            } catch (err) { }
+        }
+
+        async function fetchNodes() {
+            try {
+                const res = await authFetch('/api/nodes');
+                const nodes = await res.json();
+                document.getElementById('count-nodes').innerText = Object.keys(nodes).length;
+                const container = document.getElementById('nodes-list');
+                container.innerHTML = '';
+                Object.keys(nodes).forEach(id => {
+                    const node = nodes[id];
+                    const card = document.createElement('div');
+                    card.className = 'site-card';
+                    card.id = `node-card-${id}`;
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <span class="project-name">${id}</span>
+                            <span class="status-badge status-active" id="node-status-${id}">${node.status}</span>
+                        </div>
+                        <p style="color:var(--text-muted)">${node.user}@${node.ip}</p>
+                        <div class="action-btns">
+                            <button class="btn-small" onclick="checkNodeHealth('${id}')"><i data-lucide="heart"></i> Check Health</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+                lucide.createIcons();
+            } catch (err) { }
+        }
+
+        async function checkNodeHealth(id) {
+            const statusBadge = document.getElementById(`node-status-${id}`);
+            statusBadge.innerText = "Checking...";
+            statusBadge.className = "status-badge status-pending";
+
+            try {
+                const res = await authFetch(`/api/nodes/check/${id}`);
+                const data = await res.json();
+                statusBadge.innerText = data.status.toUpperCase();
+                statusBadge.className = `status-badge status-${data.status}`;
+                showToast(`Node ${id} is ${data.status.toUpperCase()}`);
+            } catch (err) {
+                statusBadge.innerText = "OFFLINE";
+                statusBadge.className = "status-badge status-offline";
+            }
+        }
+
+        async function fetchNotifications() {
+            const res = await authFetch('/api/notifications');
+            const data = await res.json();
+
+            const channels = ['slack', 'teams', 'discord'];
+            channels.forEach(ch => {
+                const config = data[ch] || { enabled: false, webhook_url: '', events: { success: true, failure: true, warning: true } };
+                const urlInput = document.getElementById(`notif-${ch}-url`);
+                if (config.webhook_url && config.webhook_url.startsWith('ENC:')) {
+                    urlInput.placeholder = "**************** (Encrypted)";
+                    urlInput.value = "";
+                } else {
+                    urlInput.value = config.webhook_url || '';
+                }
+
+                document.getElementById(`notif-${ch}-pass`).checked = config.events?.success ?? true;
+                document.getElementById(`notif-${ch}-fail`).checked = config.events?.failure ?? true;
+                document.getElementById(`notif-${ch}-warn`).checked = config.events?.warning ?? true;
+            });
+        }
+
+        async function saveNotifications() {
+            const channels = ['slack', 'teams', 'discord'];
+            const payload = {};
+
+            channels.forEach(ch => {
+                const url = document.getElementById(`notif-${ch}-url`).value;
+                payload[ch] = {
+                    enabled: !!url || (document.getElementById(`notif-${ch}-url`).placeholder.includes('Encrypted')),
+                    webhook_url: url || null,
+                    events: {
+                        success: document.getElementById(`notif-${ch}-pass`).checked,
+                        failure: document.getElementById(`notif-${ch}-fail`).checked,
+                        warning: document.getElementById(`notif-${ch}-warn`).checked,
+                        info: true
+                    }
+                };
+            });
+
+            await authFetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            showToast('Security Configuration Saved!');
+            fetchNotifications();
+        }
+
+        function showToast(m) {
+            const c = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerHTML = `<i data-lucide="info" style="width:18px;"></i> ${m}`;
+            c.appendChild(t); lucide.createIcons();
+            setTimeout(() => { t.classList.add('fade-out'); setTimeout(() => t.remove(), 400); }, 3000);
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('.main-content').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.topic').forEach(t => t.classList.remove('active'));
+            document.getElementById(id + '-section').style.display = 'block';
+            document.querySelector('.topic-' + id).classList.add('active');
+            clearInterval(window.logInterval);
+            if (id === 'logs') { fetchLogs(); window.logInterval = setInterval(fetchLogs, 3000); }
+            else if (id === 'nodes') fetchNodes();
+            else if (id === 'notifications') fetchNotifications();
+        }
+
+        fetchStatus(); setInterval(fetchStatus, 5000); lucide.createIcons();
+    </script>
+</body>
+
+</html>

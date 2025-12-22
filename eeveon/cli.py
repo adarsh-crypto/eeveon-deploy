@@ -8,9 +8,25 @@ import os
 import json
 import subprocess
 import argparse
+import secrets
 from pathlib import Path
 from datetime import datetime
 from cryptography.fernet import Fernet
+
+START_TIME = datetime.now()
+try:
+    from rich.console import Console
+    from rich.logging import RichHandler
+    from rich.live import Live
+    from rich.table import Table
+    from rich.panel import Panel
+    from rich.layout import Layout
+    from rich.text import Text
+    import logging
+    RICH_AVAILABLE = True
+    console = Console()
+except ImportError:
+    RICH_AVAILABLE = False
 
 # Configuration and Data paths (Use user's home directory for portability)
 EEVEON_HOME = Path.home() / ".eeveon"
@@ -56,20 +72,20 @@ def check_dependencies(args):
     for dep, desc in deps.items():
         result = subprocess.run(f"command -v {dep}", shell=True, capture_output=True)
         if result.returncode == 0:
-            print(f"  {Colors.GREEN}✓ {dep.ljust(10)}{Colors.END} {desc}")
+            print(f"  {Colors.GREEN}[PASS] {dep.ljust(10)}{Colors.END} {desc}")
         else:
             if dep == "age":
-                print(f"  {Colors.YELLOW}? {dep.ljust(10)}{Colors.END} {desc} (Using internal cryptography)")
+                print(f"  {Colors.YELLOW}[INFO] {dep.ljust(10)}{Colors.END} {desc} (Using internal cryptography)")
             else:
-                print(f"  {Colors.RED}✗ {dep.ljust(10)}{Colors.END} {desc} [MISSING]")
+                print(f"  {Colors.RED}[FAIL] {dep.ljust(10)}{Colors.END} {desc} [MISSING]")
                 all_ok = False
                 
     # Check Python packages
     try:
         import cryptography
-        print(f"  {Colors.GREEN}✓ cryptography{Colors.END} Python library found")
+        print(f"  {Colors.GREEN}[PASS] cryptography{Colors.END} Python library found")
     except ImportError:
-        print(f"  {Colors.RED}✗ cryptography{Colors.END} Python library NOT found")
+        print(f"  {Colors.RED}[FAIL] cryptography{Colors.END} Python library NOT found")
         all_ok = False
         
     if all_ok:
@@ -198,22 +214,57 @@ class Colors:
     BOLD = '\033[1m'
 
 
+def manage_system(args):
+    """Handle system-level security/ops"""
+    if args.action == 'decrypt':
+        val = args.value
+        if val.startswith("ENC:"):
+            dec = SecretsManager.decrypt("_system_", val[4:])
+            if dec:
+                print(dec, end='')
+            else:
+                print(val, end='')
+        else:
+            print(val, end='')
+
+
+def load_nodes():
+    """Load remote nodes configuration"""
+    nodes_file = CONFIG_DIR / "nodes.json"
+    if nodes_file.exists():
+        with open(nodes_file, 'r') as f:
+            try:
+                return json.load(f)
+            except:
+                return {}
+    return {}
+
+
 def log(message, level="INFO"):
     """Log message with timestamp"""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    color = {
-        "INFO": Colors.CYAN,
-        "SUCCESS": Colors.GREEN,
-        "WARNING": Colors.YELLOW,
-        "ERROR": Colors.RED
-    }.get(level, Colors.CYAN)
+    timestamp = datetime.now().strftime("%H:%M:%S")
     
-    print(f"{color}[{timestamp}] [{level}]{Colors.END} {message}")
+    if RICH_AVAILABLE:
+        color = {
+            "INFO": "cyan",
+            "SUCCESS": "green",
+            "WARNING": "yellow",
+            "ERROR": "red"
+        }.get(level, "cyan")
+        console.print(f"[bold {color}][{timestamp}] [{level}][/bold {color}] {message}")
+    else:
+        color = {
+            "INFO": Colors.CYAN,
+            "SUCCESS": Colors.GREEN,
+            "WARNING": Colors.YELLOW,
+            "ERROR": Colors.RED
+        }.get(level, Colors.CYAN)
+        print(f"{color}[{timestamp}] [{level}]{Colors.END} {message}")
     
     # Also log to file
     log_file = LOGS_DIR / f"deploy-{datetime.now().strftime('%Y-%m-%d')}.log"
     with open(log_file, 'a') as f:
-        f.write(f"[{timestamp}] [{level}] {message}\n")
+        f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{level}] {message}\n")
 
 
 def run_command(command, cwd=None, capture=True):
@@ -381,7 +432,7 @@ def list_pipelines(args):
     print(f"\n{Colors.BOLD}Configured Pipelines:{Colors.END}\n")
     
     for name, pipeline in config.items():
-        status = f"{Colors.GREEN}✓ Enabled{Colors.END}" if pipeline.get('enabled') else f"{Colors.RED}✗ Disabled{Colors.END}"
+        status = f"{Colors.GREEN}[ENABLED]{Colors.END}" if pipeline.get('enabled') else f"{Colors.RED}[DISABLED]{Colors.END}"
         approval = f"{Colors.YELLOW}Manual Required{Colors.END}" if pipeline.get('approval_required') else f"{Colors.GREEN}Auto{Colors.END}"
         print(f"{Colors.BOLD}{name}{Colors.END}")
         print(f"  Repository: {pipeline['repo_url']}")
@@ -602,6 +653,125 @@ def show_logs(args):
         print(result)
 
 
+def get_auth_token():
+    """Load or generate dashboard access token"""
+    auth_file = CONFIG_DIR / "dashboard_auth.json"
+    if auth_file.exists():
+        with open(auth_file, 'r') as f:
+            return json.load(f).get("token")
+    
+    token = secrets.token_hex(16)
+    with open(auth_file, 'w') as f:
+        json.dump({"token": token}, f)
+    return token
+
+
+def launch_dashboard(args):
+    """Launch the web management dashboard"""
+    token = get_auth_token()
+    try:
+        import uvicorn
+        from .api import app
+    except ImportError:
+        log("Dashboard dependencies missing. Run: pip install fastapi uvicorn", "ERROR")
+        return
+
+    port = args.port or 8080
+    host = args.host or "127.0.0.1"
+    
+    log(f"Starting EEveon Dashboard Engine on {host}:{port}", "INFO")
+    log(f"Access Token: {token}", "WARNING")
+    log(f"Direct Login: http://{host}:{port}/?token={token}", "SUCCESS")
+    
+    if RICH_AVAILABLE:
+        import threading
+        import time
+        
+        def run_server():
+            # Use warning level to hide initial startup spam
+            uvicorn.run(app, host=host, port=port, access_log=False, log_level="warning")
+
+        server_thread = threading.Thread(target=run_server, daemon=True)
+        server_thread.start()
+
+        log(f"EEveon Engine is running at http://{host}:{port}", "SUCCESS")
+        
+        def get_status_table():
+            config = load_config()
+            nodes_data = load_nodes()
+            uptime = datetime.now() - START_TIME
+            uptime_str = str(uptime).split('.')[0] # HH:MM:SS
+            
+            table = Table(box=None, padding=(0, 2))
+            table.add_column("System Status", style="bold cyan")
+            table.add_column("Pipelines", style="green")
+            table.add_column("Nodes", style="blue")
+            table.add_column("Uptime", style="magenta")
+            table.add_column("Memory", style="yellow")
+            
+            p_count = len(config)
+            n_count = len(nodes_data)
+            
+            # Use psutil if available, otherwise dummy
+            try:
+                import psutil
+                mem = f"{psutil.virtual_memory().percent}%"
+            except ImportError:
+                mem = "N/A"
+                
+            table.add_row("RUNNING", f"{p_count} Active", f"{n_count} Configured", uptime_str, mem)
+            return Panel(table, title="[bold white]EEveon Engine v0.4.0-alpha[/bold white]", border_style="green")
+
+        with Live(get_status_table(), refresh_per_second=2) as live:
+            while True:
+                time.sleep(1)
+                live.update(get_status_table())
+    else:
+        log(f"Launching dashboard at http://{host}:{port}", "SUCCESS")
+        uvicorn.run(app, host=host, port=port)
+
+
+def manage_nodes(args):
+    """Manage remote server nodes for multi-node deployment"""
+    if not verify_admin(): return
+    
+    nodes_file = CONFIG_DIR / "nodes.json"
+    nodes_data = load_nodes()
+
+    if args.action == 'add':
+        if not args.ip or not args.user:
+            log("Usage: eeveon nodes add <ip> <user> [--name name]", "ERROR")
+            return
+        node_id = args.name or f"node-{len(nodes_data) + 1}"
+        nodes_data[node_id] = {
+            "ip": args.ip,
+            "user": args.user,
+            "added_at": datetime.now().isoformat(),
+            "status": "active"
+        }
+        with open(nodes_file, 'w') as f:
+            json.dump(nodes_data, f, indent=2)
+        log(f"Node '{node_id}' ({args.user}@{args.ip}) added successfully", "SUCCESS")
+        
+    elif args.action == 'list':
+        if not nodes_data:
+            log("No nodes configured", "WARNING")
+            return
+        print(f"\n{Colors.BOLD}Configured Remote Nodes:{Colors.END}")
+        for node_id, data in nodes_data.items():
+            print(f"  {node_id}: {data['user']}@{data['ip']} ({data['status']})")
+        print()
+        
+    elif args.action == 'remove':
+        if args.name in nodes_data:
+            del nodes_data[args.name]
+            with open(nodes_file, 'w') as f:
+                json.dump(nodes_data, f, indent=2)
+            log(f"Node '{args.name}' removed", "SUCCESS")
+        else:
+            log(f"Node '{args.name}' not found", "ERROR")
+
+
 def remove_pipeline(args):
     """Remove a pipeline configuration"""
     if not verify_admin(): return
@@ -698,6 +868,12 @@ Examples:
     remove_parser.add_argument('project', help='Project name')
     remove_parser.set_defaults(func=remove_pipeline)
 
+    # System command (Internal/Security)
+    system_parser = subparsers.add_parser('system', help='System-level operations')
+    system_parser.add_argument('action', choices=['decrypt'], help='Action')
+    system_parser.add_argument('value', help='Value to decrypt')
+    system_parser.set_defaults(func=manage_system)
+
     # Check command
     check_parser = subparsers.add_parser('check', help='Check system dependencies')
     check_parser.set_defaults(func=check_dependencies)
@@ -714,6 +890,12 @@ Examples:
     auth_parser.add_argument('role', choices=['admin', 'deployer', 'user'], nargs='?', help='Role to assign')
     auth_parser.set_defaults(func=manage_auth)
 
+    # Dashboard command
+    dashboard_parser = subparsers.add_parser('dashboard', help='Launch the web dashboard')
+    dashboard_parser.add_argument('--port', type=int, default=8080, help='Port to run on (default: 8080)')
+    dashboard_parser.add_argument('--host', default='127.0.0.1', help='Host to bind to (default: 127.0.0.1)')
+    dashboard_parser.set_defaults(func=launch_dashboard)
+
     # Secrets command
     secrets_parser = subparsers.add_parser('secrets', help='Manage encrypted secrets')
     secrets_parser.add_argument('action', choices=['set', 'list', 'remove'], help='Action to perform')
@@ -726,6 +908,14 @@ Examples:
     decrypt_parser = subparsers.add_parser('decrypt-env', help=argparse.SUPPRESS)
     decrypt_parser.add_argument('project')
     decrypt_parser.set_defaults(func=decrypt_env)
+
+    # Nodes command
+    nodes_parser = subparsers.add_parser('nodes', help='Manage remote server nodes (Admin Only)')
+    nodes_parser.add_argument('action', choices=['add', 'list', 'remove'], help='Action to perform')
+    nodes_parser.add_argument('ip', nargs='?', help='Node IP address')
+    nodes_parser.add_argument('user', nargs='?', help='SSH username')
+    nodes_parser.add_argument('--name', help='Node friendly name')
+    nodes_parser.set_defaults(func=manage_nodes)
     
     args = parser.parse_args()
     

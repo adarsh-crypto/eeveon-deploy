@@ -5,7 +5,9 @@ A bash-based continuous deployment system that automatically deploys code from G
 ## Features
 
 - 🚀 **Automatic Deployment** - Polls GitHub every 2 minutes for new commits
-- 🌈 **Blue-Green Strategy** - Zero-downtime deployments with health checks and atomic swapping
+- **Dashboard (v0.4.0)**: Real-time web management UI with live logs and remote controls.
+- **Multi-Node**: Deploy to a cluster of servers from a single command.
+- **Blue-Green Deployments**: Atomic traffic switching for zero downtime.
 - 🔐 **Encrypted Secrets** - Securely manage environment variables using AES-128 encryption
 - 🤝 **Manual Approvals** - Pause deployments for critical environments until authorized
 - 📊 **RBAC & Auth** - Role-based access control for multiple users

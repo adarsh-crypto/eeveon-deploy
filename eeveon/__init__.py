@@ -3,7 +3,7 @@ EEveon - Lightweight CI/CD Pipeline
 A bash-based continuous deployment system for automatic deployment from GitHub.
 """
 
-__version__ = "0.3.6"
+__version__ = "0.4.0-alpha"
 __author__ = "Adarsh"
 __license__ = "MIT"
 __email__ = "sinha.adarsh200@gmail.com"
@@ -18,9 +18,9 @@ BASE_DIR = PACKAGE_DIR.parent
 # Version info
 VERSION_INFO = {
     "major": 0,
-    "minor": 3,
-    "patch": 6,
-    "release": "stable"
+    "minor": 4,
+    "patch": 0,
+    "release": "alpha"
 }
 
 def get_version():

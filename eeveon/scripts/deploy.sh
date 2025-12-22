@@ -57,6 +57,9 @@ STRATEGY=$(jq -r ".\"$PROJECT_NAME\".strategy // \"standard\"" "$CONFIG_FILE")
 
 if [ "$REPO_URL" == "null" ]; then
     log "ERROR" "Project '$PROJECT_NAME' not found in configuration"
+    if [ -f "$SCRIPT_DIR/notify.sh" ]; then
+        bash "$SCRIPT_DIR/notify.sh" "$PROJECT_NAME" "failure" "Project not found in configuration"
+    fi
     exit 1
 fi
 
@@ -102,6 +105,9 @@ if [ ! -d "$REPO_DIR/.git" ]; then
     
     if [ $? -ne 0 ]; then
         log "ERROR" "Failed to clone repository"
+        if [ -f "$SCRIPT_DIR/notify.sh" ]; then
+            bash "$SCRIPT_DIR/notify.sh" "$PROJECT_NAME" "failure" "Failed to clone repository"
+        fi
         exit 1
     fi
     log "SUCCESS" "Repository cloned successfully"
@@ -213,6 +219,9 @@ if [ -f "$SCRIPT_DIR/health_check.sh" ]; then
     # We pass the TARGET_PATH as the 3rd argument to health_check.sh
     if ! bash "$SCRIPT_DIR/health_check.sh" "$PROJECT_NAME" "post" "$TARGET_PATH"; then
         log "ERROR" "Health checks failed. Deployment aborted."
+        if [ -f "$SCRIPT_DIR/notify.sh" ]; then
+            bash "$SCRIPT_DIR/notify.sh" "$PROJECT_NAME" "failure" "Post-deployment health checks failed"
+        fi
         # In Blue-Green, we just leave the target path as is, no symlink swap
         exit 1
     fi
@@ -230,7 +239,58 @@ if [ "$STRATEGY" == "blue-green" ]; then
     log "SUCCESS" "Traffic switched to $TARGET_COLOR"
 fi
 
+# PHASE 5: Multi-Node Replication (Sync Phase)
+NODES_FILE="$EEVEON_HOME/config/nodes.json"
+SUCCESSFUL_NODES=""
+if [ -f "$NODES_FILE" ]; then
+    log "INFO" "Checking for remote nodes..."
+    NODE_IPS=$(jq -r 'keys[]' "$NODES_FILE" 2>/dev/null || echo "")
+    
+    if [ -n "$NODE_IPS" ]; then
+        for NODE_ID in $NODE_IPS; do
+            NODE_IP=$(jq -r ".\"$NODE_ID\".ip" "$NODES_FILE")
+            NODE_USER=$(jq -r ".\"$NODE_ID\".user" "$NODES_FILE")
+            
+            log "INFO" "Syncing files to node $NODE_ID ($NODE_USER@$NODE_IP)..."
+            
+            # Create target dir on remote just in case
+            ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no "$NODE_USER@$NODE_IP" "mkdir -p $TARGET_PATH"
+            
+            # Sync files (including .env and .deploy-info)
+            if rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+                "$TARGET_PATH/" "$NODE_USER@$NODE_IP:$TARGET_PATH/"; then
+                log "SUCCESS" "Sync to $NODE_ID complete"
+                SUCCESSFUL_NODES="$SUCCESSFUL_NODES $NODE_ID"
+            else
+                log "ERROR" "Sync to $NODE_ID failed. Aborting atomic cluster swap."
+                # Optionally rollback successful nodes or just stop
+                exit 1
+            fi
+        done
+    fi
+fi
+
+# PHASE 6: Multi-Node Atomic Swap (Switch Phase)
+if [ -n "$SUCCESSFUL_NODES" ] && [ "$STRATEGY" == "blue-green" ]; then
+    log "INFO" "Initiating Cluster-wide Atomic Swap..."
+    for NODE_ID in $SUCCESSFUL_NODES; do
+        NODE_IP=$(jq -r ".\"$NODE_ID\".ip" "$NODES_FILE")
+        NODE_USER=$(jq -r ".\"$NODE_ID\".user" "$NODES_FILE")
+        
+        log "INFO" "Performing remote swap on $NODE_ID..."
+        if ssh -o StrictHostKeyChecking=no "$NODE_USER@$NODE_IP" \
+            "ln -sfn $TARGET_PATH ${DEPLOY_PATH}_tmp && mv -Tf ${DEPLOY_PATH}_tmp $DEPLOY_PATH"; then
+            log "SUCCESS" "Traffic switched on $NODE_ID"
+        else
+            log "ERROR" "Traffic switch failed on $NODE_ID!"
+        fi
+    done
+fi
+
 log "SUCCESS" "Deployment completed successfully!"
+if [ -f "$SCRIPT_DIR/notify.sh" ]; then
+    bash "$SCRIPT_DIR/notify.sh" "$PROJECT_NAME" "success" "Deployment successful on all nodes" "$CURRENT_COMMIT" "$COMMIT_MSG"
+fi
 log "INFO" "Deployed commit: ${CURRENT_COMMIT:0:7}"
 log "INFO" "Active code path: $(readlink -f "$DEPLOY_PATH")"
 

@@ -4,12 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eeveon"
-version = "0.3.6"
+version = "0.4.0-alpha"
 description = "Lightweight bash-based CI/CD pipeline for automatic deployment from GitHub"
 readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "cryptography>=3.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
 ]
 license = {text = "MIT"}
 authors = [
@@ -64,7 +66,7 @@ packages = ["eeveon"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-eeveon = ["scripts/*.sh"]
+eeveon = ["scripts/*.sh", "dashboard/*.html", "dashboard/static/*.css"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
