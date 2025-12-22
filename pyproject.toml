@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eeveon"
-version = "0.2.0"
+version = "0.3.0"
 description = "Lightweight bash-based CI/CD pipeline for automatic deployment from GitHub"
 readme = "README.md"
 requires-python = ">=3.6"
+dependencies = [
+    "cryptography>=3.0.0",
+]
 license = {text = "MIT"}
 authors = [
     {name = "Adarsh", email = "sinha.adarsh200@gmail.com"}
