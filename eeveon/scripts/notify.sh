@@ -11,11 +11,12 @@ MESSAGE="$3"
 COMMIT_HASH="${4:-}"
 COMMIT_MSG="${5:-}"
 
-# Base directory
+# Base directory (Use ~/.eeveon for data)
+EEVEON_HOME="$HOME/.eeveon"
+CONFIG_FILE="$EEVEON_HOME/config/pipeline.json"
+NOTIFY_CONFIG="$EEVEON_HOME/config/notifications.json"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$BASE_DIR/config/pipeline.json"
-NOTIFY_CONFIG="$BASE_DIR/config/notifications.json"
 
 # Load notification configuration
 if [ ! -f "$NOTIFY_CONFIG" ]; then

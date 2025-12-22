@@ -15,10 +15,12 @@ if [ -z "$PROJECT_NAME" ]; then
 fi
 
 # Base directory
+# Base directory (Use ~/.eeveon for data)
+EEVEON_HOME="$HOME/.eeveon"
+CONFIG_FILE="$EEVEON_HOME/config/pipeline.json"
+LOG_DIR="$EEVEON_HOME/logs"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BASE_DIR="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$BASE_DIR/config/pipeline.json"
-LOG_DIR="$BASE_DIR/logs"
+BASE_DIR="$(dirname "$SCRIPT_DIR")" # This is the package root
 
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"
@@ -177,7 +179,7 @@ else
 fi
 
 # Inject encrypted secrets from EEveon store
-python3 "$BASE_DIR/eeveon/cli.py" decrypt-env "$PROJECT_NAME" >> "$TARGET_PATH/.env"
+eeveon decrypt-env "$PROJECT_NAME" >> "$TARGET_PATH/.env"
 
 # Run post-deployment hooks if they exist
 HOOKS_DIR="$DEPLOYMENT_DIR/hooks"

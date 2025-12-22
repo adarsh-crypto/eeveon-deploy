@@ -84,13 +84,12 @@ setup(
         ],
     },
     data_files=[
-        ("bin", ["bin/eeveon"]),
         ("scripts", [
-            "scripts/monitor.sh",
-            "scripts/deploy.sh",
-            "scripts/notify.sh",
-            "scripts/rollback.sh",
-            "scripts/health_check.sh",
+            "eeveon/scripts/monitor.sh",
+            "eeveon/scripts/deploy.sh",
+            "eeveon/scripts/notify.sh",
+            "eeveon/scripts/rollback.sh",
+            "eeveon/scripts/health_check.sh",
         ]),
     ],
     zip_safe=False,

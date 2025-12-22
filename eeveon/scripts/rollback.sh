@@ -15,11 +15,12 @@ if [ -z "$PROJECT_NAME" ]; then
     exit 1
 fi
 
-# Base directory
+# Base directory (Use ~/.eeveon for data)
+EEVEON_HOME="$HOME/.eeveon"
+CONFIG_FILE="$EEVEON_HOME/config/pipeline.json"
+LOG_DIR="$EEVEON_HOME/logs"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
-CONFIG_FILE="$BASE_DIR/config/pipeline.json"
-LOG_DIR="$BASE_DIR/logs"
 
 # Log function
 log() {

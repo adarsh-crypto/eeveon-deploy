@@ -12,16 +12,19 @@ from pathlib import Path
 from datetime import datetime
 from cryptography.fernet import Fernet
 
-# Configuration paths
-BASE_DIR = Path(__file__).parent.parent
-CONFIG_DIR = BASE_DIR / "config"
-SCRIPTS_DIR = BASE_DIR / "scripts"
-LOGS_DIR = BASE_DIR / "logs"
-DEPLOYMENTS_DIR = BASE_DIR / "deployments"
-KEYS_DIR = BASE_DIR / "keys"
+# Configuration and Data paths (Use user's home directory for portability)
+EEVEON_HOME = Path.home() / ".eeveon"
+CONFIG_DIR = EEVEON_HOME / "config"
+LOGS_DIR = EEVEON_HOME / "logs"
+DEPLOYMENTS_DIR = EEVEON_HOME / "deployments"
+KEYS_DIR = EEVEON_HOME / "keys"
 
-# Ensure directories exist
-for dir_path in [CONFIG_DIR, SCRIPTS_DIR, LOGS_DIR, DEPLOYMENTS_DIR, KEYS_DIR]:
+# Package paths (where scripts are located)
+PACKAGE_DIR = Path(__file__).parent
+SCRIPTS_DIR = PACKAGE_DIR / "scripts"
+
+# Ensure data directories exist
+for dir_path in [CONFIG_DIR, LOGS_DIR, DEPLOYMENTS_DIR, KEYS_DIR]:
     dir_path.mkdir(parents=True, exist_ok=True)
 
 CONFIG_FILE = CONFIG_DIR / "pipeline.json"
@@ -418,7 +421,7 @@ After=network.target
 [Service]
 Type=simple
 User={os.getenv('USER')}
-WorkingDirectory={BASE_DIR}
+WorkingDirectory={EEVEON_HOME}
 ExecStart={SCRIPTS_DIR}/monitor.sh {project_name}
 Restart=always
 RestartSec=10
