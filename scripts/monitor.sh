@@ -91,6 +91,13 @@ fi
 log "INFO" "Monitoring started. Checking every ${POLL_INTERVAL} seconds..."
 
 while true; do
+    # Extract project configuration (reload each loop)
+    POLL_INTERVAL=$(jq -r ".\"$PROJECT_NAME\".poll_interval" "$CONFIG_FILE")
+    APPROVAL_REQUIRED=$(jq -r ".\"$PROJECT_NAME\".approval_required // false" "$CONFIG_FILE")
+    APPROVED_COMMIT=$(jq -r ".\"$PROJECT_NAME\".approved_commit // empty" "$CONFIG_FILE")
+    PENDING_COMMIT=$(jq -r ".\"$PROJECT_NAME\".pending_commit // empty" "$CONFIG_FILE")
+    LOCAL_COMMIT=$(jq -r ".\"$PROJECT_NAME\".last_commit // empty" "$CONFIG_FILE")
+
     cd "$REPO_DIR"
     
     # Fetch latest changes
@@ -105,30 +112,48 @@ while true; do
     # Get remote commit hash
     REMOTE_COMMIT=$(git rev-parse "origin/$BRANCH")
     
-    # Get current local commit
-    LOCAL_COMMIT=$(git rev-parse HEAD)
-    
     # Check if there are new commits
     if [ "$REMOTE_COMMIT" != "$LOCAL_COMMIT" ]; then
-        log "INFO" "New commit detected!"
-        log "INFO" "Local:  $LOCAL_COMMIT"
-        log "INFO" "Remote: $REMOTE_COMMIT"
         
-        # Get commit message
-        COMMIT_MSG=$(git log -1 --pretty=format:"%s" "$REMOTE_COMMIT")
-        log "INFO" "Commit message: $COMMIT_MSG"
-        
-        # Trigger deployment
-        log "INFO" "Triggering deployment..."
-        
-        if bash "$DEPLOY_SCRIPT" "$PROJECT_NAME"; then
-            log "SUCCESS" "Deployment completed successfully"
+        if [ "$APPROVAL_REQUIRED" = "true" ]; then
             
-            # Update last commit in config
-            jq ".\"$PROJECT_NAME\".last_commit = \"$REMOTE_COMMIT\"" "$CONFIG_FILE" > "$CONFIG_FILE.tmp"
-            mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+            if [ "$REMOTE_COMMIT" = "$APPROVED_COMMIT" ]; then
+                log "INFO" "Approved commit $REMOTE_COMMIT detected. Deploying..."
+                
+                if bash "$DEPLOY_SCRIPT" "$PROJECT_NAME"; then
+                    log "SUCCESS" "Deployment completed successfully"
+                    # Update config: set last_commit, clear approved/pending
+                    jq ".\"$PROJECT_NAME\".last_commit = \"$REMOTE_COMMIT\" | .\"$PROJECT_NAME\".approved_commit = null | .\"$PROJECT_NAME\".pending_commit = null" "$CONFIG_FILE" > "$CONFIG_FILE.tmp"
+                    mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+                else
+                    log "ERROR" "Deployment failed"
+                fi
+            elif [ "$REMOTE_COMMIT" != "$PENDING_COMMIT" ]; then
+                log "WARNING" "Manual approval required for commit ${REMOTE_COMMIT:0:7}"
+                
+                # Update pending commit in config
+                jq ".\"$PROJECT_NAME\".pending_commit = \"$REMOTE_COMMIT\"" "$CONFIG_FILE" > "$CONFIG_FILE.tmp"
+                mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+                
+                # Notify
+                if [ -f "$SCRIPT_DIR/notify.sh" ]; then
+                    bash "$SCRIPT_DIR/notify.sh" "$PROJECT_NAME" "warning" \
+                        "Approval required for commit ${REMOTE_COMMIT:0:7}" "" "Action Required"
+                fi
+            else
+                log "INFO" "Waiting for approval of ${REMOTE_COMMIT:0:7}..."
+            fi
         else
-            log "ERROR" "Deployment failed"
+            # AUTO DEPLOY
+            log "INFO" "New commit detected: ${REMOTE_COMMIT:0:7}. Deploying automatically..."
+            
+            if bash "$DEPLOY_SCRIPT" "$PROJECT_NAME"; then
+                log "SUCCESS" "Deployment completed successfully"
+                jq ".\"$PROJECT_NAME\".last_commit = \"$REMOTE_COMMIT\"" "$CONFIG_FILE" > "$CONFIG_FILE.tmp"
+                mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+            else
+                log "ERROR" "Deployment failed"
+            fi
         fi
     else
         log "INFO" "No new commits (current: ${LOCAL_COMMIT:0:7})"

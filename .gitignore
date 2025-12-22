@@ -123,8 +123,9 @@ dmypy.json
 .pyre/
 
 # EEveon specific
-config/pipeline.json
-deployments/*/
+config/
+keys/
+deployments/
 logs/
 *.log
 

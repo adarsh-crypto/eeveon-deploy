@@ -5,12 +5,13 @@ A bash-based continuous deployment system that automatically deploys code from G
 ## Features
 
 - 🚀 **Automatic Deployment** - Polls GitHub every 2 minutes for new commits
-- 🔧 **Environment Variables** - Supports `.env` files for configuration
-- 🚫 **Ignore Patterns** - Use `.deployignore` to exclude files from deployment
+- 🌈 **Blue-Green Strategy** - Zero-downtime deployments with health checks and atomic swapping
+- 🔐 **Encrypted Secrets** - Securely manage environment variables using AES-128 encryption
+- 🤝 **Manual Approvals** - Pause deployments for critical environments until authorized
+- 📊 **RBAC & Auth** - Role-based access control for multiple users
 - 🪝 **Post-Deploy Hooks** - Run custom scripts after deployment
-- 📝 **Comprehensive Logging** - Track all deployments
-- 🎯 **CLI Management** - Easy-to-use command-line interface
-- 📦 **Multiple Projects** - Manage multiple deployment pipelines
+- 📝 **Comprehensive Logging** - Track all deployments with automatic rotation
+- 📦 **System Health** - Diagnostic tool to ensure server readiness
 
 ## Installation
 
@@ -80,6 +81,10 @@ eeveon start myproject     # Get systemd service instructions
 | `eeveon deploy <project>` | Trigger immediate deployment |
 | `eeveon logs [project]` | View deployment logs |
 | `eeveon remove <project>` | Remove a pipeline configuration |
+| `eeveon secrets set <p> <k> <v>` | Encrypt and store a secret |
+| `eeveon approve <project>` | Authorize a pending deployment |
+| `eeveon check` | Verify system dependencies |
+| `eeveon vacuum` | Clean up old log files |
 
 ## How It Works
 

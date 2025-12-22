@@ -6,12 +6,13 @@
 
 set -e
 
-# Get project name from argument
+# Get arguments
 PROJECT_NAME="$1"
 CHECK_TYPE="${2:-post}"  # pre or post deployment
+TARGET_PATH="$3"         # Specific path to check (useful for blue-green)
 
 if [ -z "$PROJECT_NAME" ]; then
-    echo "Usage: $0 <project-name> [pre|post]"
+    echo "Usage: $0 <project-name> [pre|post] [target-path]"
     exit 1
 fi
 
@@ -95,6 +96,11 @@ script_health_check() {
     
     log "INFO" "Running health check script: $script"
     
+    # Run script relative to target path if available
+    if [ -n "$TARGET_PATH" ]; then
+        cd "$TARGET_PATH"
+    fi
+
     if bash "$script"; then
         log "SUCCESS" "Script health check passed"
         return 0
