@@ -95,10 +95,17 @@ log "INFO" "Monitoring started. Checking every ${POLL_INTERVAL} seconds..."
 while true; do
     # Extract project configuration (reload each loop)
     POLL_INTERVAL=$(jq -r ".\"$PROJECT_NAME\".poll_interval" "$CONFIG_FILE")
+    ENABLED=$(jq -r ".\"$PROJECT_NAME\".enabled // true" "$CONFIG_FILE")
     APPROVAL_REQUIRED=$(jq -r ".\"$PROJECT_NAME\".approval_required // false" "$CONFIG_FILE")
     APPROVED_COMMIT=$(jq -r ".\"$PROJECT_NAME\".approved_commit // empty" "$CONFIG_FILE")
     PENDING_COMMIT=$(jq -r ".\"$PROJECT_NAME\".pending_commit // empty" "$CONFIG_FILE")
     LOCAL_COMMIT=$(jq -r ".\"$PROJECT_NAME\".last_commit // empty" "$CONFIG_FILE")
+
+    if [ "$ENABLED" != "true" ]; then
+        log "INFO" "Automation paused for $PROJECT_NAME. Skipping poll."
+        sleep "$POLL_INTERVAL"
+        continue
+    fi
 
     cd "$REPO_DIR"
     

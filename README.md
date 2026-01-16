@@ -14,6 +14,8 @@ A bash-based continuous deployment system that automatically deploys code from G
 - 🪝 **Post-Deploy Hooks** - Run custom scripts after deployment
 - 📝 **Comprehensive Logging** - Track all deployments with automatic rotation
 - 📦 **System Health** - Diagnostic tool to ensure server readiness
+- 🤖 **AI Control Plane (v2)** - Validated AI requests, approvals, and audit trail
+- 🪝 **GitHub Webhooks (v2)** - Instant commit detection without polling
 
 ## Installation
 
@@ -87,6 +89,13 @@ eeveon start myproject     # Get systemd service instructions
 | `eeveon approve <project>` | Authorize a pending deployment |
 | `eeveon check` | Verify system dependencies |
 | `eeveon vacuum` | Clean up old log files |
+| `eeveon ai <request>` | Parse NL into a validated tool call |
+| `eeveon ai-request <request>` | Queue a validated AI request |
+| `eeveon ai-list` | List AI requests |
+| `eeveon ai-approve <id>` | Approve and execute an AI request |
+| `eeveon ai-config get|set` | Get or set LLM config |
+| `eeveon seed-rollback <project>` | Seed rollback history from current deploy |
+| `eeveon webhook <action>` | Manage GitHub webhook settings |
 
 ## How It Works
 
@@ -129,6 +138,28 @@ DATABASE_URL=postgresql://user:pass@localhost/db
 API_KEY=your-secret-key
 PORT=3000
 ```
+
+### `~/.eeveon/config/ai.json`
+
+LLM and AI control plane configuration:
+
+```json
+{
+  "provider": "ollama",
+  "base_url": "https://ollama.eeveon.com/api/generate",
+  "model": "qwen3-coder:480b-cloud",
+  "timeout_s": 60,
+  "auto_execute_safe": false,
+  "api_key": null
+}
+```
+
+Provider notes:
+- `ollama` expects a `/api/generate` endpoint.
+- `openai-compatible` expects a `/v1/chat/completions` endpoint and an API key.
+
+Environment overrides: `EEVEON_LLM_PROVIDER`, `EEVEON_LLM_BASE_URL`,
+`EEVEON_LLM_MODEL`, `EEVEON_LLM_TIMEOUT`, `EEVEON_LLM_API_KEY`.
 
 ### `hooks/post-deploy.sh`
 
@@ -277,6 +308,19 @@ chmod +x ~/Desktop/github/eeveon/scripts/*.sh
 chmod +x ~/Desktop/github/eeveon/bin/eeveon
 ```
 
+### AI requests not executing
+
+```bash
+# Check pending AI requests
+eeveon ai-list
+
+# Approve a specific request
+eeveon ai-approve <request_id>
+
+# View AI audit log
+tail -n 50 ~/.eeveon/config/ai_audit.jsonl
+```
+
 ### Git authentication issues
 
 For private repositories, set up SSH keys:
@@ -294,6 +338,35 @@ eeveon init --repo git@github.com:username/repo.git ...
 ```
 
 ## Advanced Usage
+
+### GitHub Webhooks (Instant Deploy Triggers)
+
+Enable webhooks to avoid polling and trigger deploys instantly.
+
+```bash
+# Enable webhooks and set repo + secret
+eeveon webhook enable myproject
+eeveon webhook repo myproject owner/repo
+eeveon webhook secret myproject <webhook_secret>
+
+# Optional: restrict webhook branches
+eeveon webhook branches myproject main,release
+```
+
+Configure your GitHub webhook:
+- Payload URL: `http://<host>:<dashboard-port>/api/webhooks/github`
+- Content type: `application/json`
+- Secret: same as `webhook secret`
+- Events: `push` and `release`
+
+Webhook delivery dedupe + event log is stored in:
+- `~/.eeveon/config/webhook_dedupe.json`
+- `~/.eeveon/config/webhook_events.jsonl`
+
+#### Stable Webhook URL (Cloudflare Tunnel)
+
+For production, use a named Cloudflare Tunnel with a stable hostname so GitHub
+does not rely on a temporary URL. See `config/cloudflared/README.md`.
 
 ### Multiple Environments
 
@@ -315,6 +388,12 @@ eeveon init --interval 30 ...
 
 # Check every 5 minutes
 eeveon init --interval 300 ...
+```
+
+### Disable Multi-Node Sync
+
+```bash
+eeveon config myproject nodes_enabled false
 ```
 
 ## Security Notes

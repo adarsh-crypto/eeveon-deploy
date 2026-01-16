@@ -85,6 +85,7 @@
 ### 🧪 Testing Integration
 - [ ] Pre-deployment test execution
 - [ ] GitHub Actions integration
+- [ ] GitHub webhook triggers (instant commit detection, no polling)
 - [ ] GitLab CI integration
 - [ ] Jenkins integration
 - [ ] Test result reporting

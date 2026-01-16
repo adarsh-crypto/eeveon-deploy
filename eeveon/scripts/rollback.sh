@@ -6,9 +6,21 @@
 
 set -e
 
+# Parse arguments (supports --yes for non-interactive confirmation)
+AUTO_CONFIRM=0
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "--yes" ]; then
+        AUTO_CONFIRM=1
+    else
+        ARGS+=("$arg")
+    fi
+done
+
 # Get project name and optional version from arguments
-PROJECT_NAME="$1"
-TARGET_VERSION="${2:-previous}"  # Default to previous version
+PROJECT_NAME="${ARGS[0]}"
+ACTION="${ARGS[1]:-rollback}"
+TARGET_VERSION="previous"
 
 if [ -z "$PROJECT_NAME" ]; then
     echo "Usage: $0 <project-name> [version]"
@@ -121,12 +133,16 @@ perform_rollback() {
     log "INFO" "  Deployed at: $timestamp"
     
     # Confirm rollback
-    echo ""
-    read -p "Are you sure you want to rollback? (yes/no): " -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
-        log "INFO" "Rollback cancelled"
-        exit 0
+    if [ "$AUTO_CONFIRM" -eq 1 ]; then
+        log "INFO" "Auto-confirm enabled, proceeding with rollback"
+    else
+        echo ""
+        read -p "Are you sure you want to rollback? (yes/no): " -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+            log "INFO" "Rollback cancelled"
+            exit 0
+        fi
     fi
     
     # Create backup of current deployment before rollback
@@ -176,11 +192,14 @@ EOF
 }
 
 # Main logic
-case "${2:-rollback}" in
+case "$ACTION" in
     list)
         list_versions
         ;;
     *)
+        if [ "$ACTION" != "rollback" ]; then
+            TARGET_VERSION="$ACTION"
+        fi
         ROLLBACK_VERSION=$(get_rollback_version)
         perform_rollback "$ROLLBACK_VERSION"
         ;;

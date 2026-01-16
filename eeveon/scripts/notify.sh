@@ -18,6 +18,24 @@ NOTIFY_CONFIG="$EEVEON_HOME/config/notifications.json"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Decrypt helper to avoid relying on an old eeveon binary
+decrypt_value() {
+    local val="$1"
+    if [ -z "$val" ]; then
+        echo ""
+        return
+    fi
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -m eeveon.cli system decrypt "$val"
+    elif command -v python >/dev/null 2>&1; then
+        python -m eeveon.cli system decrypt "$val"
+    elif command -v eeveon >/dev/null 2>&1; then
+        eeveon system decrypt "$val"
+    else
+        echo "$val"
+    fi
+}
+
 # Load notification configuration
 if [ ! -f "$NOTIFY_CONFIG" ]; then
     # No notifications configured
@@ -27,11 +45,11 @@ fi
 # Extract notification settings
 SLACK_ENABLED=$(jq -r '.slack.enabled // false' "$NOTIFY_CONFIG")
 SLACK_WEBHOOK_ENC=$(jq -r '.slack.webhook_url // ""' "$NOTIFY_CONFIG")
-SLACK_WEBHOOK=$(eeveon system decrypt "$SLACK_WEBHOOK_ENC")
+SLACK_WEBHOOK=$(decrypt_value "$SLACK_WEBHOOK_ENC")
 
 DISCORD_ENABLED=$(jq -r '.discord.enabled // false' "$NOTIFY_CONFIG")
 DISCORD_WEBHOOK_ENC=$(jq -r '.discord.webhook_url // ""' "$NOTIFY_CONFIG")
-DISCORD_WEBHOOK=$(eeveon system decrypt "$DISCORD_WEBHOOK_ENC")
+DISCORD_WEBHOOK=$(decrypt_value "$DISCORD_WEBHOOK_ENC")
 
 EMAIL_ENABLED=$(jq -r '.email.enabled // false' "$NOTIFY_CONFIG")
 EMAIL_TO=$(jq -r '.email.to // ""' "$NOTIFY_CONFIG")
@@ -41,7 +59,7 @@ SMTP_PORT=$(jq -r '.email.smtp_port // 587' "$NOTIFY_CONFIG")
 
 TELEGRAM_ENABLED=$(jq -r '.telegram.enabled // false' "$NOTIFY_CONFIG")
 TELEGRAM_BOT_TOKEN_ENC=$(jq -r '.telegram.bot_token // ""' "$NOTIFY_CONFIG")
-TELEGRAM_BOT_TOKEN=$(eeveon system decrypt "$TELEGRAM_BOT_TOKEN_ENC")
+TELEGRAM_BOT_TOKEN=$(decrypt_value "$TELEGRAM_BOT_TOKEN_ENC")
 TELEGRAM_CHAT_ID=$(jq -r '.telegram.chat_id // ""' "$NOTIFY_CONFIG")
 
 WEBHOOK_ENABLED=$(jq -r '.webhook.enabled // false' "$NOTIFY_CONFIG")
@@ -49,7 +67,7 @@ WEBHOOK_URL=$(jq -r '.webhook.url // ""' "$NOTIFY_CONFIG")
 
 TEAMS_ENABLED=$(jq -r '.teams.enabled // false' "$NOTIFY_CONFIG")
 TEAMS_WEBHOOK_ENC=$(jq -r '.teams.webhook_url // ""' "$NOTIFY_CONFIG")
-TEAMS_WEBHOOK=$(eeveon system decrypt "$TEAMS_WEBHOOK_ENC")
+TEAMS_WEBHOOK=$(decrypt_value "$TEAMS_WEBHOOK_ENC")
 
 
 # Function to check if a channel should be notified for this status

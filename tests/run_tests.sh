@@ -144,12 +144,12 @@ test_file_structure() {
     test_start "Checking file structure"
     
     local files=(
-        "bin/eeveon"
-        "scripts/monitor.sh"
-        "scripts/deploy.sh"
-        "scripts/notify.sh"
-        "scripts/rollback.sh"
-        "scripts/health_check.sh"
+        "eeveon/cli.py"
+        "eeveon/scripts/monitor.sh"
+        "eeveon/scripts/deploy.sh"
+        "eeveon/scripts/notify.sh"
+        "eeveon/scripts/rollback.sh"
+        "eeveon/scripts/health_check.sh"
         "install.sh"
         "README.md"
         "LICENSE"
@@ -170,12 +170,12 @@ test_permissions() {
     test_start "Checking script permissions"
     
     local scripts=(
-        "bin/eeveon"
-        "scripts/monitor.sh"
-        "scripts/deploy.sh"
-        "scripts/notify.sh"
-        "scripts/rollback.sh"
-        "scripts/health_check.sh"
+        "eeveon/cli.py"
+        "eeveon/scripts/monitor.sh"
+        "eeveon/scripts/deploy.sh"
+        "eeveon/scripts/notify.sh"
+        "eeveon/scripts/rollback.sh"
+        "eeveon/scripts/health_check.sh"
         "install.sh"
     )
     
@@ -193,7 +193,7 @@ test_permissions() {
 test_cli_help() {
     test_start "Testing CLI help command"
     
-    if python3 "$BASE_DIR/bin/eeveon" --help &> /dev/null; then
+    if python3 -m eeveon.cli --help &> /dev/null; then
         test_pass "CLI help works"
     else
         test_fail "CLI help failed"
@@ -205,7 +205,7 @@ test_notifications() {
     test_start "Testing notification system"
     
     # Test with disabled notifications (should not fail)
-    if bash "$BASE_DIR/scripts/notify.sh" "test-project" "success" "Test message" "abc123" "Test commit" 2>/dev/null; then
+    if bash "$BASE_DIR/eeveon/scripts/notify.sh" "test-project" "success" "Test message" "abc123" "Test commit" 2>/dev/null; then
         test_pass "Notification script runs without errors"
     else
         test_fail "Notification script failed"
@@ -217,13 +217,13 @@ test_rollback_structure() {
     test_start "Testing rollback script structure"
     
     # Check if script has required functions
-    if grep -q "list_versions" "$BASE_DIR/scripts/rollback.sh"; then
+    if grep -q "list_versions" "$BASE_DIR/eeveon/scripts/rollback.sh"; then
         test_pass "Rollback script has list_versions function"
     else
         test_fail "Rollback script missing list_versions function"
     fi
     
-    if grep -q "perform_rollback" "$BASE_DIR/scripts/rollback.sh"; then
+    if grep -q "perform_rollback" "$BASE_DIR/eeveon/scripts/rollback.sh"; then
         test_pass "Rollback script has perform_rollback function"
     else
         test_fail "Rollback script missing perform_rollback function"
@@ -234,13 +234,13 @@ test_rollback_structure() {
 test_health_check_structure() {
     test_start "Testing health check script structure"
     
-    if grep -q "http_health_check" "$BASE_DIR/scripts/health_check.sh"; then
+    if grep -q "http_health_check" "$BASE_DIR/eeveon/scripts/health_check.sh"; then
         test_pass "Health check script has http_health_check function"
     else
         test_fail "Health check script missing http_health_check function"
     fi
     
-    if grep -q "retry_health_check" "$BASE_DIR/scripts/health_check.sh"; then
+    if grep -q "retry_health_check" "$BASE_DIR/eeveon/scripts/health_check.sh"; then
         test_pass "Health check script has retry mechanism"
     else
         test_fail "Health check script missing retry mechanism"
@@ -270,11 +270,44 @@ test_json_configs() {
     fi
 }
 
+# Test 9: AI control plane config + audit log
+test_ai_control_plane() {
+    test_start "Testing AI control plane config"
+
+    local ai_config="$HOME/.eeveon/config/ai.json"
+    local audit_log="$HOME/.eeveon/config/ai_audit.jsonl"
+    rm -f "$ai_config" "$audit_log"
+
+    if python -m eeveon.cli ai-config set --timeout 40 --auto-execute >/dev/null 2>&1; then
+        test_pass "AI config set"
+    else
+        test_fail "AI config set failed"
+    fi
+
+    if python -m eeveon.cli ai-config get | grep -q "\"timeout_s\": 40"; then
+        test_pass "AI config get"
+    else
+        test_fail "AI config get missing timeout"
+    fi
+
+    if python -m eeveon.cli ai-request "Explain what will happen if I run eeveon deploy now." >/dev/null 2>&1; then
+        test_pass "AI request queued"
+    else
+        test_fail "AI request failed"
+    fi
+
+    if [ -f "$audit_log" ]; then
+        test_pass "AI audit log created"
+    else
+        test_fail "AI audit log missing"
+    fi
+}
+
 # Test 9: Test deployment script syntax
 test_deploy_script_syntax() {
     test_start "Testing deployment script syntax"
     
-    if bash -n "$BASE_DIR/scripts/deploy.sh" 2>/dev/null; then
+    if bash -n "$BASE_DIR/eeveon/scripts/deploy.sh" 2>/dev/null; then
         test_pass "deploy.sh has valid syntax"
     else
         test_fail "deploy.sh has syntax errors"
@@ -285,7 +318,7 @@ test_deploy_script_syntax() {
 test_monitor_script_syntax() {
     test_start "Testing monitor script syntax"
     
-    if bash -n "$BASE_DIR/scripts/monitor.sh" 2>/dev/null; then
+    if bash -n "$BASE_DIR/eeveon/scripts/monitor.sh" 2>/dev/null; then
         test_pass "monitor.sh has valid syntax"
     else
         test_fail "monitor.sh has syntax errors"
@@ -296,7 +329,7 @@ test_monitor_script_syntax() {
 test_python_cli_syntax() {
     test_start "Testing Python CLI syntax"
     
-    if python3 -m py_compile "$BASE_DIR/bin/eeveon" 2>/dev/null; then
+    if python3 -m py_compile "$BASE_DIR/eeveon/cli.py" 2>/dev/null; then
         test_pass "eeveon CLI has valid Python syntax"
     else
         test_fail "eeveon CLI has Python syntax errors"
@@ -349,6 +382,7 @@ main() {
     test_rollback_structure
     test_health_check_structure
     test_json_configs
+    test_ai_control_plane
     test_deploy_script_syntax
     test_monitor_script_syntax
     test_python_cli_syntax

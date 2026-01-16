@@ -109,6 +109,11 @@
             transition: 0.3s;
         }
 
+        .nav-count-danger {
+            background: rgba(244, 63, 94, 0.15);
+            color: #f43f5e;
+        }
+
         .active .nav-count {
             background: var(--primary-glow);
             color: var(--primary);
@@ -210,6 +215,12 @@
         .status-offline {
             background: rgba(244, 63, 94, 0.15);
             color: #f43f5e;
+        }
+
+        .status-failed {
+            background: rgba(244, 63, 94, 0.15);
+            color: #f43f5e;
+            border: 1px solid rgba(244, 63, 94, 0.4);
         }
 
         .action-btns {
@@ -340,6 +351,9 @@
                 <div class="topic topic-nodes" onclick="showSection('nodes')">Nodes <span class="nav-count"
                         id="count-nodes">0</span></div>
                 <div class="topic topic-notifications" onclick="showSection('notifications')">Notifications</div>
+                <div class="topic topic-ai" onclick="showSection('ai')">AI <span class="nav-count"
+                        id="count-ai">0</span><span class="nav-count nav-count-danger"
+                        id="count-ai-failed" style="display:none;">0</span></div>
                 <div class="topic topic-settings" onclick="showSection('settings')">Settings</div>
             </div>
             <div class="update-time" id="last-update">Updating...</div>
@@ -412,6 +426,54 @@
                 style="background: var(--primary); color: #000; padding: 12px 40px; font-weight: 800;">
                 <i data-lucide="save"></i> SAVE CONFIGURATION
             </button>
+        </div>
+    </div>
+
+    <div class="main-content" id="ai-section" style="display: none;">
+        <div class="site-card">
+            <div class="card-header">
+                <span class="project-name">AI Requests</span>
+                <span class="nav-count" id="count-ai-requests">0</span>
+            </div>
+            <div id="ai-requests-summary" style="margin-top:0.5rem; color:var(--text-muted); font-size:0.8rem;"></div>
+            <div id="ai-requests-list" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;"></div>
+        </div>
+
+        <div class="site-card">
+            <div class="card-header">
+                <span class="project-name">LLM Settings</span>
+            </div>
+            <div style="display:grid; gap:1rem; margin-top:1rem;">
+                <label style="font-size:0.85rem; color:var(--text-muted);">Provider</label>
+                <select id="ai-provider" style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+                    <option value="ollama">ollama</option>
+                    <option value="openai-compatible">openai-compatible</option>
+                </select>
+                <label style="font-size:0.85rem; color:var(--text-muted);">Base URL</label>
+                <input type="text" id="ai-base-url" placeholder="https://ollama.eeveon.com/api/generate"
+                    style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+                <label style="font-size:0.85rem; color:var(--text-muted);">Model</label>
+                <input type="text" id="ai-model" placeholder="qwen3-coder:480b-cloud"
+                    style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+                <label style="font-size:0.85rem; color:var(--text-muted);">API Key (leave blank to keep)</label>
+                <input type="password" id="ai-api-key" placeholder="sk-..."
+                    style="width:100%; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+                <label style="font-size:0.85rem; color:var(--text-muted); display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="ai-api-key-clear"> Clear stored API key
+                </label>
+                <label style="font-size:0.85rem; color:var(--text-muted);">Timeout (seconds)</label>
+                <input type="number" id="ai-timeout" min="5" max="120"
+                    style="width:200px; padding:12px; background:#111; border:1px solid #333; color:white; border-radius:8px;">
+                <label style="font-size:0.85rem; color:var(--text-muted); display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="ai-auto-exec"> Auto-execute safe tools (no confirmation required)
+                </label>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex;">
+                <button class="btn-small" onclick="saveAiConfig()"
+                    style="background: var(--primary); color: #000; padding: 12px 40px; font-weight: 800;">
+                    <i data-lucide="save"></i> SAVE AI SETTINGS
+                </button>
+            </div>
         </div>
     </div>
 
@@ -592,6 +654,112 @@
             fetchNotifications();
         }
 
+        async function fetchAiRequests() {
+            try {
+                const res = await authFetch('/api/ai/requests');
+                const data = await res.json();
+                const pending = data.filter(r => r.status === 'pending');
+                const failed = data.filter(r => r.status === 'failed');
+                document.getElementById('count-ai').innerText = pending.length;
+                const failedBadge = document.getElementById('count-ai-failed');
+                failedBadge.innerText = failed.length;
+                failedBadge.style.display = failed.length ? 'inline-flex' : 'none';
+                document.getElementById('count-ai-requests').innerText = data.length;
+                document.getElementById('ai-requests-summary').innerText =
+                    `${pending.length} pending · ${failed.length} failed · ${data.length} total`;
+                renderAiRequests(data);
+            } catch (err) { }
+        }
+
+        function renderAiRequests(requests) {
+            const container = document.getElementById('ai-requests-list');
+            container.innerHTML = '';
+            if (!requests.length) {
+                container.innerHTML = '<div style="color:var(--text-muted);">No AI requests yet.</div>';
+                return;
+            }
+            const ordered = [...requests].sort((a, b) => {
+                if (a.status === b.status) {
+                    return (b.created_at || '').localeCompare(a.created_at || '');
+                }
+                return a.status === 'pending' ? -1 : 1;
+            });
+            ordered.forEach(req => {
+                const statusClass = req.status === 'pending'
+                    ? 'status-pending'
+                    : (req.status === 'failed' ? 'status-failed' : 'status-active');
+                const card = document.createElement('div');
+                card.className = 'site-card';
+                card.style.marginBottom = '0';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <span class="project-name">${req.tool_call?.tool || 'unknown'}</span>
+                            <div style="color:var(--text-muted); font-size:0.8rem;">${req.request || ''}</div>
+                        </div>
+                        <span class="status-badge ${statusClass}">${req.status}</span>
+                    </div>
+                    <div style="color:var(--text-muted); font-size:0.75rem; margin-top:0.5rem;">
+                        ${req.created_at || 'n/a'}
+                    </div>
+                    ${req.status === 'failed' && req.error ? `
+                        <div style="color:#f43f5e; font-size:0.8rem; margin-top:0.5rem;">
+                            ${req.error}
+                        </div>` : ''}
+                    ${req.status === 'pending' ? `
+                        <div class="action-btns">
+                            <button class="btn-small" onclick="approveAiRequest('${req.id}')"><i data-lucide="check"></i> Approve</button>
+                        </div>` : ''}
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        async function approveAiRequest(id) {
+            await authFetch(`/api/ai/approve/${id}`, { method: 'POST' });
+            showToast(`AI request approved: ${id}`);
+            fetchAiRequests();
+        }
+
+        async function fetchAiConfig() {
+            try {
+                const res = await authFetch('/api/ai/config');
+                const data = await res.json();
+                document.getElementById('ai-provider').value = data.provider || 'ollama';
+                document.getElementById('ai-base-url').value = data.base_url || '';
+                document.getElementById('ai-model').value = data.model || '';
+                document.getElementById('ai-timeout').value = data.timeout_s || 60;
+                document.getElementById('ai-auto-exec').checked = !!data.auto_execute_safe;
+                document.getElementById('ai-api-key').value = '';
+                document.getElementById('ai-api-key-clear').checked = false;
+            } catch (err) { }
+        }
+
+        async function saveAiConfig() {
+            const apiKeyValue = document.getElementById('ai-api-key').value.trim();
+            const clearKey = document.getElementById('ai-api-key-clear').checked;
+            const payload = {
+                provider: document.getElementById('ai-provider').value || null,
+                base_url: document.getElementById('ai-base-url').value || null,
+                model: document.getElementById('ai-model').value || null,
+                timeout_s: parseInt(document.getElementById('ai-timeout').value || '60', 10),
+                auto_execute_safe: document.getElementById('ai-auto-exec').checked
+            };
+            if (clearKey) {
+                payload.api_key = '';
+            } else if (apiKeyValue) {
+                payload.api_key = apiKeyValue;
+            }
+            await authFetch('/api/ai/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            showToast('AI settings saved.');
+            fetchAiConfig();
+        }
+
         function showToast(m) {
             const c = document.getElementById('toast-container');
             const t = document.createElement('div');
@@ -610,9 +778,14 @@
             if (id === 'logs') { fetchLogs(); window.logInterval = setInterval(fetchLogs, 3000); }
             else if (id === 'nodes') fetchNodes();
             else if (id === 'notifications') fetchNotifications();
+            else if (id === 'ai') { fetchAiRequests(); fetchAiConfig(); }
         }
 
-        fetchStatus(); setInterval(fetchStatus, 5000); lucide.createIcons();
+        fetchStatus();
+        fetchAiRequests();
+        setInterval(fetchStatus, 5000);
+        setInterval(fetchAiRequests, 7000);
+        lucide.createIcons();
     </script>
 </body>
 

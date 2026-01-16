@@ -119,6 +119,14 @@ We use **our own bash-based testing system** - no external CI/CD needed!
 ./tests/integration_test.sh
 ```
 
+### AI Control Plane Tests (Lightweight)
+
+```bash
+python -m eeveon.cli ai-config get
+python -m eeveon.cli ai-request "Explain what will happen if I run eeveon deploy now."
+python -m eeveon.cli ai-list
+```
+
 **Install Pre-Commit Hook:**
 ```bash
 # Copy pre-commit hook

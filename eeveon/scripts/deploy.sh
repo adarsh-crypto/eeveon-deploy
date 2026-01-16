@@ -54,6 +54,7 @@ BRANCH=$(jq -r ".\"$PROJECT_NAME\".branch" "$CONFIG_FILE")
 DEPLOY_PATH=$(jq -r ".\"$PROJECT_NAME\".deploy_path" "$CONFIG_FILE")
 DEPLOYMENT_DIR=$(jq -r ".\"$PROJECT_NAME\".deployment_dir" "$CONFIG_FILE")
 STRATEGY=$(jq -r ".\"$PROJECT_NAME\".strategy // \"standard\"" "$CONFIG_FILE")
+NODES_ENABLED=$(jq -r ".\"$PROJECT_NAME\".nodes_enabled // true" "$CONFIG_FILE")
 
 if [ "$REPO_URL" == "null" ]; then
     log "ERROR" "Project '$PROJECT_NAME' not found in configuration"
@@ -61,6 +62,13 @@ if [ "$REPO_URL" == "null" ]; then
         bash "$SCRIPT_DIR/notify.sh" "$PROJECT_NAME" "failure" "Project not found in configuration"
     fi
     exit 1
+fi
+
+BACKUP_DIR="$DEPLOYMENT_DIR/backups"
+HISTORY_FILE="$DEPLOYMENT_DIR/deployment_history.json"
+mkdir -p "$BACKUP_DIR"
+if [ ! -f "$HISTORY_FILE" ]; then
+    echo "[]" > "$HISTORY_FILE"
 fi
 
 REPO_DIR="$DEPLOYMENT_DIR/repo"
@@ -242,20 +250,22 @@ fi
 # PHASE 5: Multi-Node Replication (Sync Phase)
 NODES_FILE="$EEVEON_HOME/config/nodes.json"
 SUCCESSFUL_NODES=""
-if [ -f "$NODES_FILE" ]; then
+if [ "$NODES_ENABLED" != "true" ]; then
+    log "INFO" "Node sync disabled for this pipeline"
+elif [ -f "$NODES_FILE" ]; then
     log "INFO" "Checking for remote nodes..."
     NODE_IPS=$(jq -r 'keys[]' "$NODES_FILE" 2>/dev/null || echo "")
-    
+
     if [ -n "$NODE_IPS" ]; then
         for NODE_ID in $NODE_IPS; do
             NODE_IP=$(jq -r ".\"$NODE_ID\".ip" "$NODES_FILE")
             NODE_USER=$(jq -r ".\"$NODE_ID\".user" "$NODES_FILE")
-            
+
             log "INFO" "Syncing files to node $NODE_ID ($NODE_USER@$NODE_IP)..."
-            
+
             # Create target dir on remote just in case
             ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no "$NODE_USER@$NODE_IP" "mkdir -p $TARGET_PATH"
-            
+
             # Sync files (including .env and .deploy-info)
             if rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
                 "$TARGET_PATH/" "$NODE_USER@$NODE_IP:$TARGET_PATH/"; then
@@ -285,6 +295,42 @@ if [ -n "$SUCCESSFUL_NODES" ] && [ "$STRATEGY" == "blue-green" ]; then
             log "ERROR" "Traffic switch failed on $NODE_ID!"
         fi
     done
+fi
+
+# Record deployment history + backup
+VERSION="deploy-$(date +%s)"
+BACKUP_PATH="$BACKUP_DIR/$VERSION"
+mkdir -p "$BACKUP_PATH"
+if rsync -a "$TARGET_PATH/" "$BACKUP_PATH/"; then
+    HISTORY_ENTRY=$(cat <<EOF
+{
+  "version": "$VERSION",
+  "commit": "$CURRENT_COMMIT",
+  "timestamp": "$(date -Iseconds)",
+  "status": "success",
+  "strategy": "$STRATEGY",
+  "path": "$TARGET_PATH"
+}
+EOF
+)
+    jq ". += [$HISTORY_ENTRY]" "$HISTORY_FILE" > "$HISTORY_FILE.tmp" && mv "$HISTORY_FILE.tmp" "$HISTORY_FILE"
+
+    MAX_HISTORY=$(jq -r ".\"$PROJECT_NAME\".rollback_keep // 5" "$CONFIG_FILE")
+    if ! [[ "$MAX_HISTORY" =~ ^[0-9]+$ ]]; then
+        MAX_HISTORY=5
+    fi
+    if [ "$MAX_HISTORY" -gt 0 ]; then
+        COUNT=$(jq 'length' "$HISTORY_FILE")
+        if [ "$COUNT" -gt "$MAX_HISTORY" ]; then
+            REMOVE_VERSIONS=$(jq -r ".[0:-$MAX_HISTORY][] | .version" "$HISTORY_FILE")
+            jq ".[-$MAX_HISTORY:]" "$HISTORY_FILE" > "$HISTORY_FILE.tmp" && mv "$HISTORY_FILE.tmp" "$HISTORY_FILE"
+            for ver in $REMOVE_VERSIONS; do
+                rm -rf "$BACKUP_DIR/$ver"
+            done
+        fi
+    fi
+else
+    log "WARNING" "Backup creation failed; rollback history not updated"
 fi
 
 log "SUCCESS" "Deployment completed successfully!"
