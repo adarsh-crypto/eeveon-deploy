@@ -20,18 +20,27 @@ A bash-based continuous deployment system that automatically deploys code from G
 ## Installation
 
 ```bash
-git clone https://github.com/adarsh-crypto/eeveon.git
-cd eeveon
+pip install ee-deploy
+```
+
+Install from source:
+
+```bash
+git clone https://github.com/adarsh-crypto/eeveon-deploy.git
+cd eeveon-deploy
 ./install.sh
 source ~/.bashrc
 ```
+
+Primary CLI command: `ee-deploy`  
+Compatibility alias: `eeveon`
 
 ## Quick Start
 
 ### 1. Initialize a Pipeline
 
 ```bash
-eeveon init \
+ee-deploy init \
   --repo https://github.com/username/repo.git \
   --name myproject \
   --path /var/www/myproject \
@@ -41,7 +50,7 @@ eeveon init \
 ### 2. Configure (Optional)
 
 ```bash
-cd ~/Desktop/github/eeveon/deployments/myproject
+cd ~/Desktop/github/eeveon-deploy/deployments/myproject
 
 # Create .deployignore
 cat > .deployignore << EOF
@@ -69,33 +78,33 @@ chmod +x hooks/post-deploy.sh
 ### 3. Start Monitoring
 
 ```bash
-eeveon start myproject -f  # Run in foreground
+ee-deploy start myproject -f  # Run in foreground
 # OR
-eeveon start myproject     # Get systemd service instructions
+ee-deploy start myproject     # Get systemd service instructions
 ```
 
 ## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `eeveon init` | Initialize a new deployment pipeline |
-| `eeveon list` | List all configured pipelines |
-| `eeveon start <project>` | Start monitoring a pipeline |
-| `eeveon stop <project>` | Stop a running pipeline |
-| `eeveon deploy <project>` | Trigger immediate deployment |
-| `eeveon logs [project]` | View deployment logs |
-| `eeveon remove <project>` | Remove a pipeline configuration |
-| `eeveon secrets set <p> <k> <v>` | Encrypt and store a secret |
-| `eeveon approve <project>` | Authorize a pending deployment |
-| `eeveon check` | Verify system dependencies |
-| `eeveon vacuum` | Clean up old log files |
-| `eeveon ai <request>` | Parse NL into a validated tool call |
-| `eeveon ai-request <request>` | Queue a validated AI request |
-| `eeveon ai-list` | List AI requests |
-| `eeveon ai-approve <id>` | Approve and execute an AI request |
-| `eeveon ai-config get|set` | Get or set LLM config |
-| `eeveon seed-rollback <project>` | Seed rollback history from current deploy |
-| `eeveon webhook <action>` | Manage GitHub webhook settings |
+| `ee-deploy init` | Initialize a new deployment pipeline |
+| `ee-deploy list` | List all configured pipelines |
+| `ee-deploy start <project>` | Start monitoring a pipeline |
+| `ee-deploy stop <project>` | Stop a running pipeline |
+| `ee-deploy deploy <project>` | Trigger immediate deployment |
+| `ee-deploy logs [project]` | View deployment logs |
+| `ee-deploy remove <project>` | Remove a pipeline configuration |
+| `ee-deploy secrets set <p> <k> <v>` | Encrypt and store a secret |
+| `ee-deploy approve <project>` | Authorize a pending deployment |
+| `ee-deploy check` | Verify system dependencies |
+| `ee-deploy vacuum` | Clean up old log files |
+| `ee-deploy ai <request>` | Parse NL into a validated tool call |
+| `ee-deploy ai-request <request>` | Queue a validated AI request |
+| `ee-deploy ai-list` | List AI requests |
+| `ee-deploy ai-approve <id>` | Approve and execute an AI request |
+| `ee-deploy ai-config get|set` | Get or set LLM config |
+| `ee-deploy seed-rollback <project>` | Seed rollback history from current deploy |
+| `ee-deploy webhook <action>` | Manage GitHub webhook settings |
 
 ## How It Works
 
@@ -177,44 +186,44 @@ pm2 restart myapp
 ### Deploy a Node.js Application
 
 ```bash
-eeveon init \
+ee-deploy init \
   --repo git@github.com:user/nodeapp.git \
   --name nodeapp \
   --path /var/www/nodeapp
 
 # Create post-deploy hook
-cat > ~/Desktop/github/eeveon/deployments/nodeapp/hooks/post-deploy.sh << 'EOF'
+cat > ~/Desktop/github/eeveon-deploy/deployments/nodeapp/hooks/post-deploy.sh << 'EOF'
 #!/bin/bash
 cd /var/www/nodeapp
 npm install --production
 pm2 restart nodeapp || pm2 start server.js --name nodeapp
 EOF
-chmod +x ~/Desktop/github/eeveon/deployments/nodeapp/hooks/post-deploy.sh
+chmod +x ~/Desktop/github/eeveon-deploy/deployments/nodeapp/hooks/post-deploy.sh
 
-eeveon start nodeapp -f
+ee-deploy start nodeapp -f
 ```
 
 ### Deploy a Static Website
 
 ```bash
-eeveon init \
+ee-deploy init \
   --repo https://github.com/user/static-site.git \
   --name mysite \
   --path /var/www/html/mysite
 
-eeveon start mysite -f
+ee-deploy start mysite -f
 ```
 
 ### Deploy a Python Flask App
 
 ```bash
-eeveon init \
+ee-deploy init \
   --repo git@github.com:user/flaskapp.git \
   --name flaskapp \
   --path /var/www/flaskapp
 
 # Create post-deploy hook
-cat > ~/Desktop/github/eeveon/deployments/flaskapp/hooks/post-deploy.sh << 'EOF'
+cat > ~/Desktop/github/eeveon-deploy/deployments/flaskapp/hooks/post-deploy.sh << 'EOF'
 #!/bin/bash
 cd /var/www/flaskapp
 python3 -m venv venv
@@ -222,9 +231,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 sudo systemctl restart flaskapp
 EOF
-chmod +x ~/Desktop/github/eeveon/deployments/flaskapp/hooks/post-deploy.sh
+chmod +x ~/Desktop/github/eeveon-deploy/deployments/flaskapp/hooks/post-deploy.sh
 
-eeveon start flaskapp -f
+ee-deploy start flaskapp -f
 ```
 
 ## Running as a Service
@@ -233,7 +242,7 @@ To run the monitor as a systemd service:
 
 ```bash
 # Start the pipeline to generate service file
-eeveon start myproject
+ee-deploy start myproject
 
 # Install as systemd service
 sudo cp /tmp/eeveon-myproject.service /etc/systemd/system/
@@ -291,10 +300,10 @@ All dependencies will be installed by `install.sh` if missing.
 ps aux | grep monitor.sh
 
 # Check logs
-eeveon logs myproject -n 50
+ee-deploy logs myproject -n 50
 
 # Manually trigger deployment
-eeveon deploy myproject
+ee-deploy deploy myproject
 ```
 
 ### Permission issues
@@ -304,18 +313,18 @@ eeveon deploy myproject
 sudo chown -R $USER:$USER /var/www/myproject
 
 # Check script permissions
-chmod +x ~/Desktop/github/eeveon/scripts/*.sh
-chmod +x ~/Desktop/github/eeveon/bin/eeveon
+chmod +x ~/Desktop/github/eeveon-deploy/scripts/*.sh
+chmod +x ~/Desktop/github/eeveon-deploy/bin/eeveon
 ```
 
 ### AI requests not executing
 
 ```bash
 # Check pending AI requests
-eeveon ai-list
+ee-deploy ai-list
 
 # Approve a specific request
-eeveon ai-approve <request_id>
+ee-deploy ai-approve <request_id>
 
 # View AI audit log
 tail -n 50 ~/.eeveon/config/ai_audit.jsonl
@@ -334,7 +343,7 @@ cat ~/.ssh/id_ed25519.pub
 # Copy and add to GitHub Settings > SSH Keys
 
 # Use SSH URL in pipeline
-eeveon init --repo git@github.com:username/repo.git ...
+ee-deploy init --repo git@github.com:username/repo.git ...
 ```
 
 ## Advanced Usage
@@ -345,12 +354,12 @@ Enable webhooks to avoid polling and trigger deploys instantly.
 
 ```bash
 # Enable webhooks and set repo + secret
-eeveon webhook enable myproject
-eeveon webhook repo myproject owner/repo
-eeveon webhook secret myproject <webhook_secret>
+ee-deploy webhook enable myproject
+ee-deploy webhook repo myproject owner/repo
+ee-deploy webhook secret myproject <webhook_secret>
 
 # Optional: restrict webhook branches
-eeveon webhook branches myproject main,release
+ee-deploy webhook branches myproject main,release
 ```
 
 Configure your GitHub webhook:
@@ -372,11 +381,11 @@ does not rely on a temporary URL. See `config/cloudflared/README.md`.
 
 ```bash
 # Production
-eeveon init --repo https://github.com/user/app.git \
+ee-deploy init --repo https://github.com/user/app.git \
   --name app-prod --path /var/www/app --branch main
 
 # Staging
-eeveon init --repo https://github.com/user/app.git \
+ee-deploy init --repo https://github.com/user/app.git \
   --name app-staging --path /var/www/app-staging --branch develop
 ```
 
@@ -384,16 +393,16 @@ eeveon init --repo https://github.com/user/app.git \
 
 ```bash
 # Check every 30 seconds
-eeveon init --interval 30 ...
+ee-deploy init --interval 30 ...
 
 # Check every 5 minutes
-eeveon init --interval 300 ...
+ee-deploy init --interval 300 ...
 ```
 
 ### Disable Multi-Node Sync
 
 ```bash
-eeveon config myproject nodes_enabled false
+ee-deploy config myproject nodes_enabled false
 ```
 
 ## Security Notes
@@ -419,7 +428,7 @@ Adarsh
 
 For issues or questions, check the logs:
 ```bash
-eeveon logs -n 100
+ee-deploy logs -n 100
 ```
 
 Or open an issue on GitHub.

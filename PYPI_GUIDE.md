@@ -22,7 +22,7 @@ pip install --upgrade build twine
 ### Step 2: Clean Previous Builds
 
 ```bash
-cd /home/adarsh/Desktop/github/eeveon
+cd /home/adarsh/Desktop/github/eeveon-deploy
 rm -rf dist/ build/ *.egg-info
 ```
 
@@ -33,13 +33,13 @@ python3 -m build
 ```
 
 This creates:
-- `dist/eeveon-0.4.0-py3-none-any.whl` (wheel)
-- `dist/eeveon-0.4.0.tar.gz` (source)
+- `dist/ee_deploy-0.4.0-py3-none-any.whl` (wheel)
+- `dist/ee_deploy-0.4.0.tar.gz` (source)
 
 ### Step 4: Verify Package Contents
 
 ```bash
-tar -tzf dist/eeveon-0.4.0.tar.gz | head -20
+tar -tzf dist/ee_deploy-0.4.0.tar.gz | head -20
 ```
 
 Check that it includes:
@@ -59,11 +59,11 @@ python3 -m venv test_env
 source test_env/bin/activate
 
 # Install from local build
-pip install dist/eeveon-0.4.0-py3-none-any.whl
+pip install dist/ee_deploy-0.4.0-py3-none-any.whl
 
 # Test basic commands
-eeveon --version
-eeveon --help
+ee-deploy --version
+ee-deploy --help
 
 # Deactivate and cleanup
 deactivate
@@ -77,7 +77,7 @@ rm -rf test_env
 python3 -m twine upload --repository testpypi dist/*
 
 # Test installation from TestPyPI
-pip install --index-url https://test.pypi.org/simple/ eeveon==0.4.0
+pip install --index-url https://test.pypi.org/simple/ ee-deploy==0.4.0
 ```
 
 ### Step 7: Upload to Production PyPI
@@ -98,8 +98,8 @@ If you don't have a token:
 
 1. Go to: https://pypi.org/manage/account/token/
 2. Click "Add API token"
-3. Name: `eeveon-v0.4.0`
-4. Scope: `Project: eeveon` (or "Entire account" for first upload)
+3. Name: `ee-deploy-v0.4.0`
+4. Scope: `Project: ee-deploy` (or "Entire account" for first upload)
 5. Copy the token (starts with `pypi-`)
 6. Store securely (you won't see it again!)
 
@@ -128,23 +128,23 @@ After publishing, users can install with:
 
 ### Basic Installation
 ```bash
-pip install eeveon
+pip install ee-deploy
 ```
 
 ### With Premium CLI (Rich library)
 ```bash
-pip install eeveon[premium]
+pip install ee-deploy[premium]
 ```
 
 ### Individual Extras
 ```bash
-pip install eeveon[rich]        # Premium terminal UI
-pip install eeveon[monitoring]  # Memory/CPU metrics
+pip install ee-deploy[rich]        # Premium terminal UI
+pip install ee-deploy[monitoring]  # Memory/CPU metrics
 ```
 
 ### Development Installation
 ```bash
-pip install eeveon[dev]
+pip install ee-deploy[dev]
 ```
 
 ---
@@ -152,7 +152,7 @@ pip install eeveon[dev]
 ## ✅ Post-Publishing Verification
 
 ### 1. Check PyPI Page
-Visit: https://pypi.org/project/eeveon/
+Visit: https://pypi.org/project/ee-deploy/
 
 Verify:
 - ✅ Version shows `0.4.0`
@@ -168,11 +168,11 @@ Verify:
 python3 -m venv fresh_test
 source fresh_test/bin/activate
 
-pip install eeveon[premium]
-eeveon --version  # Should show: 0.4.0
+pip install ee-deploy[premium]
+ee-deploy --version  # Should show: 0.4.0
 
 # Test dashboard
-eeveon dashboard
+ee-deploy dashboard
 # Verify token authentication works
 
 deactivate
@@ -181,11 +181,11 @@ rm -rf fresh_test
 
 ### 3. Update GitHub Release
 
-1. Go to: https://github.com/adarsh-crypto/eeveon/releases/tag/v0.4.0
+1. Go to: https://github.com/adarsh-crypto/eeveon-deploy/releases/tag/v0.4.0
 2. Edit release
 3. Add PyPI badge:
    ```markdown
-   [![PyPI version](https://badge.fury.io/py/eeveon.svg)](https://badge.fury.io/py/eeveon)
+   [![PyPI version](https://badge.fury.io/py/ee-deploy.svg)](https://badge.fury.io/py/ee-deploy)
    ```
 4. Add installation instructions
 5. Update release notes
@@ -195,9 +195,9 @@ rm -rf fresh_test
 ## 📊 Package Statistics
 
 After publishing, monitor:
-- **Downloads**: https://pypistats.org/packages/eeveon
-- **Dependencies**: https://libraries.io/pypi/eeveon
-- **Security**: https://pypi.org/project/eeveon/#security
+- **Downloads**: https://pypistats.org/packages/ee-deploy
+- **Dependencies**: https://libraries.io/pypi/ee-deploy
+- **Security**: https://pypi.org/project/ee-deploy/#security
 
 ---
 
@@ -240,8 +240,8 @@ recursive-include eeveon/dashboard *.html *.css
 Publishing is successful when:
 
 - ✅ Package appears on PyPI
-- ✅ `pip install eeveon` works
-- ✅ Dashboard launches with `eeveon dashboard`
+- ✅ `pip install ee-deploy` works
+- ✅ Dashboard launches with `ee-deploy dashboard`
 - ✅ All scripts included and executable
 - ✅ Dependencies install correctly
 - ✅ README renders on PyPI page

@@ -11,7 +11,7 @@ __email__ = "sinha.adarsh200@gmail.com"
 from pathlib import Path
 
 # Package metadata
-PACKAGE_NAME = "eeveon"
+PACKAGE_NAME = "ee-deploy"
 PACKAGE_DIR = Path(__file__).parent
 BASE_DIR = PACKAGE_DIR.parent
 

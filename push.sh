@@ -23,6 +23,6 @@ else
     echo ""
     echo "Try one of these:"
     echo "1. Use GitHub CLI: gh auth login"
-    echo "2. Use SSH: git remote set-url origin git@github.com:adarsh-crypto/eeveon.git"
-    echo "3. Use token: git push https://TOKEN@github.com/adarsh-crypto/eeveon.git main"
+    echo "2. Use SSH: git remote set-url origin git@github.com:adarsh-crypto/eeveon-deploy.git"
+    echo "3. Use token: git push https://TOKEN@github.com/adarsh-crypto/eeveon-deploy.git main"
 fi

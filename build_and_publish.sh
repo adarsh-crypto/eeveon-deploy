@@ -108,7 +108,7 @@ echo "Package files:"
 ls -lh dist/
 echo ""
 echo "To install locally:"
-echo "  pip install dist/eeveon-*.whl"
+echo "  pip install dist/*.whl"
 echo ""
 echo "To publish to TestPyPI:"
 echo "  twine upload --repository testpypi dist/*"

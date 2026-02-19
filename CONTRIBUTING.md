@@ -17,7 +17,7 @@ Before creating bug reports, please check the existing issues as you might find 
 * **Provide specific examples to demonstrate the steps**
 * **Describe the behavior you observed after following the steps**
 * **Explain which behavior you expected to see instead and why**
-* **Include logs from `eeveon logs`**
+* **Include logs from `ee-deploy logs`**
 
 ### Suggesting Enhancements
 
@@ -43,8 +43,8 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 1. Fork the repo
 2. Clone your fork:
    ```bash
-   git clone https://github.com/your-username/eeveon.git
-   cd eeveon
+   git clone https://github.com/your-username/eeveon-deploy.git
+   cd eeveon-deploy
    ```
 
 3. Create a branch:
@@ -57,7 +57,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 5. Test your changes:
    ```bash
    ./install.sh
-   eeveon --help
+   ee-deploy --help
    ```
 
 6. Commit your changes:
@@ -107,8 +107,8 @@ Before submitting a pull request, please test your changes:
 
 2. Test basic commands:
    ```bash
-   eeveon --help
-   eeveon list
+   ee-deploy --help
+   ee-deploy list
    ```
 
 3. Test with a real repository (if applicable)

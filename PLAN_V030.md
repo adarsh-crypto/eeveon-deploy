@@ -21,7 +21,7 @@ Transform EEveon from a basic deployment tool into a sophisticated orchestration
 
 ### Tasks:
 - [x] **Encryption Helper**: Integrate `age` (now using `cryptography`/Fernet for better portability).
-- [x] **Secrets Command**: Add `eeveon secrets set <key> <value>` and `eeveon secrets encrypt/decrypt`.
+- [x] **Secrets Command**: Add `ee-deploy secrets set <key> <value>` and `ee-deploy secrets encrypt/decrypt`.
 - [x] **Runtime Injection**: Update `deploy.sh` to decrypt secrets into a temporary buffer during the transfer/build phase.
 - [x] **Safety**: Ensure decrypted files are never written to persistent storage in plain text.
 
@@ -33,7 +33,7 @@ Transform EEveon from a basic deployment tool into a sophisticated orchestration
 ### Tasks:
 - [x] **Approval State**: Add a `pending_approval` state to the monitor daemon.
 - [x] **Notification Hook**: Send interactive buttons or links (where supported) for one-click approval.
-- [x] **Approval CLI**: Implement `eeveon approve <site_name>` to release the deployment lock.
+- [x] **Approval CLI**: Implement `ee-deploy approve <site_name>` to release the deployment lock.
 - [x] **Timeouts**: Define expiration for pending approvals to avoid stale code releases.
 
 ---
@@ -49,8 +49,8 @@ Transform EEveon from a basic deployment tool into a sophisticated orchestration
 ---
 
 ## 🛠️ Technical Debt & Polish
-- [x] **Log Rotation**: Implement automated log cleanup for the monitor daemon via `eeveon vacuum`.
-- [x] **Dependency Check**: Ensure `rsync`, `git`, and `cryptography` are present via `eeveon check`.
+- [x] **Log Rotation**: Implement automated log cleanup for the monitor daemon via `ee-deploy vacuum`.
+- [x] **Dependency Check**: Ensure `rsync`, `git`, and `cryptography` are present via `ee-deploy check`.
 - [x] **Performance**: Optimize the git-polling logic to reduce CPU usage on low-end servers.
 
 ---

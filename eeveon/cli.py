@@ -200,20 +200,20 @@ def manage_webhook(args):
         log(f"Webhooks disabled for '{project_name}'", "WARNING")
     elif args.action == "secret":
         if not args.value:
-            log("Usage: eeveon webhook secret <project> <secret>", "ERROR")
+            log("Usage: ee-deploy webhook secret <project> <secret>", "ERROR")
             return
         encrypted = SecretsManager.encrypt("_system_", args.value)
         pipeline["webhook_secret"] = f"ENC:{encrypted}"
         log(f"Webhook secret updated for '{project_name}'", "SUCCESS")
     elif args.action == "repo":
         if not args.value:
-            log("Usage: eeveon webhook repo <project> <owner/repo>", "ERROR")
+            log("Usage: ee-deploy webhook repo <project> <owner/repo>", "ERROR")
             return
         pipeline["webhook_repo"] = args.value
         log(f"Webhook repo set for '{project_name}'", "SUCCESS")
     elif args.action == "branches":
         if not args.value:
-            log("Usage: eeveon webhook branches <project> <branch1,branch2>", "ERROR")
+            log("Usage: ee-deploy webhook branches <project> <branch1,branch2>", "ERROR")
             return
         branches = [b.strip() for b in args.value.split(",") if b.strip()]
         pipeline["webhook_branches"] = branches
@@ -416,7 +416,7 @@ def init_pipeline(args):
     log(f"Deployment directory: {deployment_dir}", "INFO")
     log(f"Next steps:", "INFO")
     log(f"  1. Edit {env_template} if needed", "INFO")
-    log(f"  2. Run: eeveon start {project_name}", "INFO")
+    log(f"  2. Run: ee-deploy start {project_name}", "INFO")
 
 
 def set_config(args):
@@ -477,7 +477,7 @@ def list_pipelines(args):
     
     if not config:
         log("No pipelines configured yet", "WARNING")
-        log("Run 'eeveon init' to create one", "INFO")
+        log("Run 'ee-deploy init' to create one", "INFO")
         return
     
     print(f"\n{Colors.BOLD}Configured Pipelines:{Colors.END}\n")
@@ -579,7 +579,7 @@ def manage_secrets(args):
 
     if args.action == 'set':
         if not args.key or not args.value:
-            log("Usage: eeveon secrets set <project> <key> <value>", "ERROR")
+            log("Usage: ee-deploy secrets set <project> <key> <value>", "ERROR")
             return
         encrypted_val = SecretsManager.encrypt(project_name, args.value)
         secrets[args.key] = encrypted_val
@@ -893,7 +893,7 @@ def ai_assist(args):
 
     request = " ".join(args.request).strip() if args.request else ""
     if not request:
-        log("Usage: eeveon ai \"<request>\"", "ERROR")
+        log("Usage: ee-deploy ai \"<request>\"", "ERROR")
         return
 
     try:
@@ -931,7 +931,7 @@ def ai_request(args):
 
     request = " ".join(args.request).strip() if args.request else ""
     if not request:
-        log("Usage: eeveon ai-request \"<request>\"", "ERROR")
+        log("Usage: ee-deploy ai-request \"<request>\"", "ERROR")
         return
 
     try:
@@ -1278,7 +1278,7 @@ def manage_nodes(args):
 
     if args.action == 'add':
         if not args.ip or not args.user:
-            log("Usage: eeveon nodes add <ip> <user> [--name name]", "ERROR")
+            log("Usage: ee-deploy nodes add <ip> <user> [--name name]", "ERROR")
             return
         node_id = args.name or f"node-{len(nodes_data) + 1}"
         nodes_data[node_id] = {
@@ -1336,11 +1336,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  eeveon init --repo https://github.com/user/repo.git --name myproject --path /var/www/myproject
-  eeveon list
-  eeveon start myproject
-  eeveon deploy myproject
-  eeveon logs myproject
+  ee-deploy init --repo https://github.com/user/repo.git --name myproject --path /var/www/myproject
+  ee-deploy list
+  ee-deploy start myproject
+  ee-deploy deploy myproject
+  ee-deploy logs myproject
         """
     )
     

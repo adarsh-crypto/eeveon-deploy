@@ -10,7 +10,7 @@ This release transforms EEveon from a silent background engine into a fully obse
 ### ✨ Phase 1: Web Dashboard (COMPLETED)
 
 #### Core Features
-- **Real-time Dashboard**: Beautiful, glassmorphic web UI served directly from `eeveon dashboard`
+- **Real-time Dashboard**: Beautiful, glassmorphic web UI served directly from `ee-deploy dashboard`
 - **Live System Metrics**: Terminal status bar showing Pipelines, Nodes, Uptime, and Memory usage
 - **Interactive Pipeline Management**: Deploy, Rollback, Approve, and Remove projects from the browser
 - **Professional Navigation**: Unified header with dynamic activity counters and "Last Updated" timestamp
@@ -50,7 +50,7 @@ This release transforms EEveon from a silent background engine into a fully obse
 ### 🌐 Phase 3: Multi-Node Orchestration (COMPLETED)
 
 #### Edge Deployment
-- **Node Registration**: `eeveon nodes add <ip> <user>` for SSH-based cluster setup
+- **Node Registration**: `ee-deploy nodes add <ip> <user>` for SSH-based cluster setup
 - **Two-Phase Deployment**: Sync all nodes first, then perform atomic traffic switch
 - **Cluster-Wide Atomic Swap**: Simultaneous Blue-Green switching across all registered nodes
 - **Failure Isolation**: Deployment aborts if any single node sync fails
@@ -85,7 +85,7 @@ This release transforms EEveon from a silent background engine into a fully obse
 ### 🛠️ Technical Improvements
 
 #### CLI Enhancements
-- Added `eeveon system decrypt` for secure secret retrieval
+- Added `ee-deploy system decrypt` for secure secret retrieval
 - Integrated `rich` library for premium terminal experience
 - Live status table with real-time metrics during dashboard operation
 - Text-pure indicators ([PASS], [FAIL], [WARN]) replacing all emojis
@@ -131,7 +131,7 @@ This release transforms EEveon from a silent background engine into a fully obse
 
 2. **Launch Dashboard**:
    ```bash
-   eeveon dashboard
+   ee-deploy dashboard
    ```
    Copy the access token from terminal output.
 
@@ -143,7 +143,7 @@ This release transforms EEveon from a silent background engine into a fully obse
 
 4. **Register Edge Nodes** (Optional):
    ```bash
-   eeveon nodes add <server-ip> <ssh-user> --name production-1
+   ee-deploy nodes add <server-ip> <ssh-user> --name production-1
    ```
 
 ---
@@ -211,4 +211,4 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Full Changelog**: https://github.com/eeveon/eeveon/compare/v0.3.0...v0.4.0
+**Full Changelog**: https://github.com/adarsh-crypto/eeveon-deploy/compare/v0.3.0...v0.4.0

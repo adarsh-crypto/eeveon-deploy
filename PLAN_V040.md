@@ -9,12 +9,12 @@ This version focuses on moving EEveon from a "Silent Engine" to a "Visible Cockp
 **Objective:** A beautiful, real-time web interface served directly from the CLI.
 
 ### Architecture:
-- **Backend API**: Integrate a lightweight FastAPI or Flask server into the `eeveon dashboard` command.
+- **Backend API**: Integrate a lightweight FastAPI or Flask server into the `ee-deploy dashboard` command.
 - **Frontend**: A modern, sleek React/Vite SPA bundled within the package resources.
 - **Real-time**: Use WebSockets or Server-Sent Events (SSE) to stream deployment logs to the UI.
 
 ### Tasks:
-- [x] **Dashboard Command**: Implement `eeveon dashboard` to launch the local web server.
+- [x] **Dashboard Command**: Implement `ee-deploy dashboard` to launch the local web server.
 - [x] **Visual Pipeline Status**: Real-time cards showing `Active`, `Deploying`, `Pending Approval`, or `Failed`.
 - [x] **Interactive Logs**: A "Terminal" component in the browser to view live `monitor.sh` output.
 - [x] **Action Center**: Buttons for `Deploy Now`, `Rollback`, `Approve`, and `Reject` directly from the UI.
@@ -40,7 +40,7 @@ This version focuses on moving EEveon from a "Silent Engine" to a "Visible Cockp
 **Objective:** Deploy to multiple production servers from a single controller.
 
 ### Tasks:
-- [x] **Node Registration**: `eeveon nodes add <ip> <user>` (SSH-based setup).
+- [x] **Node Registration**: `ee-deploy nodes add <ip> <user>` (SSH-based setup).
 - [x] **Deployment Replication**: Update the `deploy.sh` engine to trigger sequential or parallel syncs to registered edge nodes.
 - [x] **Health Aggregation**: The dashboard should show the status of *every* node (e.g., "3/4 Nodes Healthy").
 - [x] **Atomic Group Swap**: Ensure the Blue-Green swap happens across all nodes simultaneously (or canary-style).

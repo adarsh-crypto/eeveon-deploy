@@ -31,19 +31,19 @@ optional_requirements = {
 }
 
 setup(
-    name="eeveon",
+    name="ee-deploy",
     version=version.get("__version__", "0.2.0"),
     author="Adarsh",
     author_email="sinha.adarsh200@gmail.com",
     description="Lightweight bash-based CI/CD pipeline for automatic deployment from GitHub",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/adarsh-crypto/eeveon",
+    url="https://github.com/adarsh-crypto/eeveon-deploy",
     project_urls={
-        "Bug Reports": "https://github.com/adarsh-crypto/eeveon/issues",
-        "Source": "https://github.com/adarsh-crypto/eeveon",
-        "Documentation": "https://github.com/adarsh-crypto/eeveon#readme",
-        "Changelog": "https://github.com/adarsh-crypto/eeveon/blob/main/CHANGELOG.md",
+        "Bug Reports": "https://github.com/adarsh-crypto/eeveon-deploy/issues",
+        "Source": "https://github.com/adarsh-crypto/eeveon-deploy",
+        "Documentation": "https://github.com/adarsh-crypto/eeveon-deploy#readme",
+        "Changelog": "https://github.com/adarsh-crypto/eeveon-deploy/blob/main/CHANGELOG.md",
     },
     packages=find_packages(exclude=["tests", "tests.*"]),
     classifiers=[
@@ -83,6 +83,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
+            "ee-deploy=eeveon.cli:main",
             "eeveon=eeveon.cli:main",
         ],
     },

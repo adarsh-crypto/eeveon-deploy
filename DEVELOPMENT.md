@@ -45,8 +45,8 @@ eeveon/
 
 ```bash
 # Clone the repository
-git clone https://github.com/adarsh-crypto/eeveon.git
-cd eeveon
+git clone https://github.com/adarsh-crypto/eeveon-deploy.git
+cd eeveon-deploy
 
 # Install in development mode
 pip install -e .
@@ -123,7 +123,7 @@ We use **our own bash-based testing system** - no external CI/CD needed!
 
 ```bash
 python -m eeveon.cli ai-config get
-python -m eeveon.cli ai-request "Explain what will happen if I run eeveon deploy now."
+python -m eeveon.cli ai-request "Explain what will happen if I run ee-deploy deploy now."
 python -m eeveon.cli ai-list
 ```
 
@@ -183,10 +183,10 @@ python3 setup.py sdist bdist_wheel
 
 ```bash
 # Install from wheel
-pip install dist/eeveon-*.whl
+pip install dist/ee_deploy-*.whl
 
 # Test it
-eeveon --help
+ee-deploy --help
 ```
 
 ### Publish to PyPI
@@ -345,10 +345,10 @@ bash -x scripts/deploy.sh
 
 ```bash
 # View deployment logs
-tail -f ~/Desktop/github/eeveon/logs/deploy-$(date +%Y-%m-%d).log
+tail -f ~/Desktop/github/eeveon-deploy/logs/deploy-$(date +%Y-%m-%d).log
 
-# Or use eeveon CLI
-eeveon logs myproject -n 100
+# Or use ee-deploy CLI
+ee-deploy logs myproject -n 100
 ```
 
 ### Test Individual Scripts

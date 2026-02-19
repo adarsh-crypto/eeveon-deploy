@@ -50,15 +50,15 @@ ae48edd chore: Update version to 0.4.0 stable and add rich/psutil extras
 
 **Option A: If you have SSH configured**
 ```bash
-cd /home/adarsh/Desktop/github/eeveon
-git remote set-url origin git@github.com:adarsh-crypto/eeveon.git
+cd /home/adarsh/Desktop/github/eeveon-deploy
+git remote set-url origin git@github.com:adarsh-crypto/eeveon-deploy.git
 git push origin main
 ```
 
 **Option B: Using Personal Access Token**
 ```bash
 # Replace YOUR_TOKEN with your GitHub token
-git push https://YOUR_TOKEN@github.com/adarsh-crypto/eeveon.git main
+git push https://YOUR_TOKEN@github.com/adarsh-crypto/eeveon-deploy.git main
 ```
 
 **Option C: Manual GitHub Desktop/Web**
@@ -78,7 +78,7 @@ pip install --upgrade build twine
 
 ### 2. Clean and Build
 ```bash
-cd /home/adarsh/Desktop/github/eeveon
+cd /home/adarsh/Desktop/github/eeveon-deploy
 rm -rf dist/ build/ *.egg-info
 python3 -m build
 ```
@@ -87,16 +87,16 @@ python3 -m build
 ```bash
 ls -lh dist/
 # Should show:
-# eeveon-0.4.0-py3-none-any.whl
-# eeveon-0.4.0.tar.gz
+# ee_deploy-0.4.0-py3-none-any.whl
+# ee_deploy-0.4.0.tar.gz
 ```
 
 ### 4. Test Locally (Optional but Recommended)
 ```bash
 python3 -m venv test_env
 source test_env/bin/activate
-pip install dist/eeveon-0.4.0-py3-none-any.whl
-eeveon --version  # Should show: 0.4.0
+pip install dist/ee_deploy-0.4.0-py3-none-any.whl
+ee-deploy --version  # Should show: 0.4.0
 deactivate
 rm -rf test_env
 ```
@@ -126,14 +126,14 @@ python3 -m twine upload dist/*
 ### Installation Options for Users
 ```bash
 # Basic
-pip install eeveon
+pip install ee-deploy
 
 # With premium CLI
-pip install eeveon[premium]
+pip install ee-deploy[premium]
 
 # Individual extras
-pip install eeveon[rich]
-pip install eeveon[monitoring]
+pip install ee-deploy[rich]
+pip install ee-deploy[monitoring]
 ```
 
 ---
@@ -194,17 +194,17 @@ pip install eeveon[monitoring]
 ## 🔗 Important Links
 
 ### GitHub
-- Repository: https://github.com/adarsh-crypto/eeveon
-- Releases: https://github.com/adarsh-crypto/eeveon/releases
-- Issues: https://github.com/adarsh-crypto/eeveon/issues
+- Repository: https://github.com/adarsh-crypto/eeveon-deploy
+- Releases: https://github.com/adarsh-crypto/eeveon-deploy/releases
+- Issues: https://github.com/adarsh-crypto/eeveon-deploy/issues
 
 ### PyPI (After Publishing)
-- Package: https://pypi.org/project/eeveon/
-- Stats: https://pypistats.org/packages/eeveon
+- Package: https://pypi.org/project/ee-deploy/
+- Stats: https://pypistats.org/packages/ee-deploy
 
 ### Documentation
-- README: https://github.com/adarsh-crypto/eeveon#readme
-- CHANGELOG: https://github.com/adarsh-crypto/eeveon/blob/main/CHANGELOG.md
+- README: https://github.com/adarsh-crypto/eeveon-deploy#readme
+- CHANGELOG: https://github.com/adarsh-crypto/eeveon-deploy/blob/main/CHANGELOG.md
 
 ---
 
@@ -216,7 +216,7 @@ Before announcing the release:
 - [ ] Build package with `python3 -m build`
 - [ ] Upload to PyPI with `twine upload dist/*`
 - [ ] Verify package on PyPI
-- [ ] Test installation: `pip install eeveon`
+- [ ] Test installation: `pip install ee-deploy`
 - [ ] Create GitHub release notes
 - [ ] Announce on social media/blog
 - [ ] Update project website (if any)
@@ -229,7 +229,7 @@ Your release will be successful when:
 
 1. ✅ All commits pushed to GitHub
 2. ✅ Package visible on PyPI
-3. ✅ `pip install eeveon` works globally
+3. ✅ `pip install ee-deploy` works globally
 4. ✅ Dashboard launches with authentication
 5. ✅ All features functional
 6. ✅ Documentation accessible

@@ -13,7 +13,7 @@
 
 ### ↩️ Rollback Capability
 - [x] Keep last 5 deployments by default (configurable)
-- [x] Quick rollback command: `eeveon rollback <project> [version]`
+- [x] Quick rollback command: `ee-deploy rollback <project> [version]`
 - [x] Automatic rollback on deployment failure
 - [x] Deployment history tracking
 - [x] Rollback with confirmation prompt
